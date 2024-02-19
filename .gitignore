@@ -1,0 +1,5 @@
+.*
+!/.gitignore
+*.pyc
+poetry.lock
+*.db

@@ -1,0 +1,74 @@
+This document includes licenses for included 3rd-party projects. 
+The following is a summary:
+- MITRE ATT&CK: Custom (https://github.com/mitre/cti/blob/master/LICENSE.txt)
+- MITRE D3FEND: MIT (https://github.com/d3fend/d3fend-ontology/blob/master/LICENSE.md)
+
+------------
+MITRE ATT&CK
+------------
+
+ATT&CK®
+===========================
+License
+-------
+The MITRE Corporation (MITRE) hereby grants you a non-exclusive, royalty-free license to use ATT&CK® for research, 
+development, and commercial purposes. Any copy you make for such purposes is authorized provided that you reproduce 
+MITRE's copyright designation and this license in any such copy.
+
+"© 2024 The MITRE Corporation. This work is reproduced and distributed with the permission of The MITRE Corporation."
+
+Disclaimers
+-----------
+MITRE does not claim ATT&CK enumerates all possibilities for the types of actions and behaviors documented as part 
+of its adversary model and framework of techniques. Using the information contained within ATT&CK to address or 
+cover full categories of techniques will not guarantee full defensive coverage as there may be undisclosed techniques 
+or variations on existing techniques not documented by ATT&CK.
+
+ALL DOCUMENTS AND THE INFORMATION CONTAINED THEREIN ARE PROVIDED ON AN "AS IS" BASIS AND THE CONTRIBUTOR, THE 
+ORGANIZATION HE/SHE REPRESENTS OR IS SPONSORED BY (IF ANY), THE MITRE CORPORATION, ITS BOARD OF TRUSTEES, OFFICERS, 
+AGENTS, AND EMPLOYEES, DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE 
+USE OF THE INFORMATION THEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS 
+FOR A PARTICULAR PURPOSE.
+
+CAPEC™
+===========================
+License
+-------
+The MITRE Corporation (MITRE) hereby grants you a non-exclusive, royalty-free license to use Common Attack Pattern 
+Enumeration and Classification (CAPEC™) for research, development, and commercial purposes. Any copy you make for 
+such purposes is authorized provided that you reproduce MITRE’s copyright designation and this license in any such copy.
+
+Disclaimers
+-----------
+ALL DOCUMENTS AND THE INFORMATION CONTAINED THEREIN ARE PROVIDED ON AN "AS IS" BASIS AND THE CONTRIBUTOR, THE 
+ORGANIZATION HE/SHE REPRESENTS OR IS SPONSORED BY (IF ANY), THE MITRE CORPORATION, ITS BOARD OF TRUSTEES, OFFICERS, 
+AGENTS, AND EMPLOYEES, DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE 
+USE OF THE INFORMATION THEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS 
+FOR A PARTICULAR PURPOSE.
+
+------------
+MITRE D3FEND
+------------
+
+MIT License
+
+Copyright (c) 2022 The MITRE Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
