@@ -6,12 +6,22 @@ on:
 #  release:
 #    types: [published]
 jobs:
-  deploy:
+  builddeploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Build wheel
       run: make gha
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        verify-metadata: false
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
