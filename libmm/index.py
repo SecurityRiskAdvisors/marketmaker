@@ -44,7 +44,13 @@ def gen_manifest_from_campaigns(campaigns: List[BlueprintCampaign], prefix: str,
             campaign_dict[campaign.name].append(
                 variant.render(apply_overrides=True, blueprint_id=campaign.blueprint_id)
             )
-    return {**campaign_dict, **metadata}
+    # TODO: campaigns will eventually be moved under a top-level key of their own
+    #       in the meantime, need to delete any campaigns called "metadata" to prevent overlap
+    if "metadata" in campaign_dict:
+        del campaign_dict["metadata"]
+    # switching the order of these obviates the above key del,
+    # but it unfortunately puts the metadata at the bottom of the file
+    return {**metadata, **campaign_dict}
 
 
 def gen_manifest_from_blueprint(blueprint: Blueprint) -> dict:

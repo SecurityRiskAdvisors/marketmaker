@@ -289,30 +289,57 @@ class GuidanceHook(AbstractUserHook):
         Adds the per-Variant guidance to the linked data table
         """
         if not self._link_populated:
-            if variants := session.query(Variant).all():
-                for variant in variants:
-                    variant_docs = GuidanceMapping.get_document_contents_for_object(
-                        object_attribute=GuidanceMapping.variant_id, object_id=variant.id
+            if mappings := session.query(GuidanceMapping).all():
+                # since the lookup here is for all items mapped to the variant/bp id
+                # this keeps track of the processed ids then short circuits
+                # so as note to populate the link table with duplicates per id
+                # TODO: can probably replace this with sql querying that groups results by id
+                v_ids = []
+                bp_ids = []
+                for mapping in mappings:  # type: GuidanceMapping
+                    if mapping.variant_id:
+                        o_id = mapping.variant_id
+                        o_attribute = GuidanceMapping.variant_id
+                        ld_type = LinkedDataTarget.Variant
+                        if mapping.variant_id in v_ids:
+                            continue
+                        else:
+                            v_ids.append(mapping.variant_id)
+                    elif mapping.blueprint_id:
+                        o_id = mapping.blueprint_id
+                        o_attribute = GuidanceMapping.blueprint_id
+                        ld_type = LinkedDataTarget.Blueprint
+                        if mapping.blueprint_id in bp_ids:
+                            continue
+                        else:
+                            bp_ids.append(mapping.blueprint_id)
+                    else:
+                        continue
+
+                    docs = GuidanceMapping.get_document_contents_for_object(
+                        object_attribute=o_attribute, object_id=o_id
                     )
-                    if len(variant_docs) > 1:
-                        document = f"{MARKDOWN_NEWLINE}---{MARKDOWN_NEWLINE}".join(variant_docs)
-                    elif len(variant_docs) == 1:
-                        document = variant_docs[0]
+                    if len(docs) > 1:
+                        document = f"{MARKDOWN_NEWLINE}---{MARKDOWN_NEWLINE}".join(docs)
+                    elif len(docs) == 1:
+                        document = docs[0]
                     else:
                         continue
 
                     session.add(
                         LinkedData(
-                            variant_id=variant.id,
-                            target_type=LinkedDataTarget.Variant,
+                            variant_id=mapping.variant_id if mapping.variant_id else None,
+                            blueprint_id=mapping.blueprint_id if mapping.blueprint_id else None,
+                            target_type=ld_type,
                             data_format=LinkedDataFormat.Markdown,
                             data=document,
                             origin=self.name,
                             display_name="Operator Guidance",
                         )
                     )
-                session.commit()
-                self._link_populated = True
+
+            session.commit()
+            self._link_populated = True
 
     def hook(self, event_type, context):
         if event_type == EventTypes.CliStart:

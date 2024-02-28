@@ -590,6 +590,7 @@ def ingest_variants_from_library(paths: List[StrOrPath]):
             try:
                 Variant.from_file(variant_file)
             except Exception as e:
+                logger.error(f"{variant_file.as_posix()}: {e}")
                 exceptions = True
     if exceptions:
         raise LoggedException("Errors encountered when loading Variants from library(s)")
