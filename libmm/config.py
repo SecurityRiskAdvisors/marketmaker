@@ -31,6 +31,7 @@ class GlobalSettings(BaseSettings):
     db_file_path: str = Field(default="", env="LIBMM_DB_FILEPATH")
     db_text_delimiter: str = Field(default="||", env="LIBMM_DB_DELIMETER")
     db_file_autodelete: bool = Field(default=True, env="LIBMM_DB_AUTODELETE")
+    experimental_features: bool = Field(default=False, env="LIBMM_EXPERIMENTAL_FEATURES")
 
 
 global_settings = GlobalSettings()

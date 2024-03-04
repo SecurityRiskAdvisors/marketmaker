@@ -13,4 +13,4 @@ The following environment variables can be used to control `libmm` settings:
 |LIBMM_DB_FILEPATH|String|Use on-disk SQLite database rather than in-memory|||
 |LIBMM_DB_DELIMETER|String|Default delimiter to use for SerDe operations|\|\||When using the same database across runs, this value must not change|
 |LIBMM_DB_AUTODELETE|Boolean|If using an on-disk database, delete it before use|True||
-
+|LIBMM_EXPERIMENTAL_FEATURES|Boolean|Enable experimental features|False||
