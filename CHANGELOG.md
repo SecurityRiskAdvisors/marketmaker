@@ -1,5 +1,11 @@
 ***
 
+# Version 1.1.0 - March 2024
+
+- Added Selectors experimental functionality
+
+***
+
 # Version 1.0.1 - February 2024
 
 - Update linked data for Guidance extension
