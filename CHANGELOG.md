@@ -1,5 +1,11 @@
 ***
 
+# Version 1.2.0 - March 2024
+
+- Added Darkpool script for generating static HTML sites of library
+
+***
+
 # Version 1.1.0 - March 2024
 
 - Added Selectors experimental functionality

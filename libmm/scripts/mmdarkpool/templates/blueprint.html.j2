@@ -1,0 +1,205 @@
+{% extends "base.html.j2" %}
+{% block headlinks %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var navfs_btn = document.getElementById('navfs');
+        var navlayer_frame = document.getElementById('navlayer');
+
+        navfs_btn.addEventListener("click", function(){
+            navlayer_frame.requestFullscreen();
+        });
+    });
+</script>
+{% endblock headlinks %}
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="columns">
+            <div class="column is-2">
+                <aside class="menu">
+                    <p class="menu-label">
+                        Bundles
+                    </p>
+                    <details open>
+                        <summary>Latest Bundles</summary>
+                        <ul class="menu-list">
+                            <li>
+                                <ul>
+                                {% for latest_pair in latest_blueprints %}
+                                    <li><a href="/bundles/{{ latest_pair[1].id }}.html">{{ latest_pair[0] | upper }}</a></li>
+                                {% endfor %}
+                                </ul>
+                            </li>
+                        </ul>
+                    </details>
+                    <details open>
+                        <summary>All Bundles</summary>
+                        <ul class="menu-list">
+                            <li>
+                                <ul>
+                                {% for blueprint in all_blueprints %}
+                                    <li><a href="/bundles/{{ blueprint.id }}.html">{{ blueprint.name }}</a></li>
+                                {% endfor %}
+                                </ul>
+                            </li>
+                        </ul>
+                    </details>
+
+                </aside>
+            </div>
+
+            <div class="column is-9">
+                <div class="notification is-danger">
+                    <nav class="level">
+                        <div class="level-left">
+                            <p class="title">{{ blueprint.name }}</p>
+                        </div>
+                        <div class="level-right">
+                            <a download="{{ blueprint.name }}.yml" href="/manifests/{{ blueprint.id }}.yml">
+                                <i class="fas fa-download fa-lg"></i>
+                            </a>
+                        </div>
+                    </nav>
+                </div>
+                <section>
+                    <article class="message is-dark">
+                        <div class="message-header">
+                            <div class="level-left">
+                                Description
+                            </div>
+                            <div class="level-right">
+                                <p>
+                                    <span class="tag is-light">{{ blueprint.id }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="message-body">
+                            {{ blueprint.description }}
+                        </div>
+                    </article>
+
+                    <article class="message is-dark">
+                        <div class="message-header">
+                            Overview
+                        </div>
+                        <div class="message-body">
+                            <nav class="level">
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Test Cases</p>
+                                        <p class="title">{{ blueprint.variants | length }}</p>
+                                    </div>
+                                </div>
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Campaigns</p>
+                                        <p class="title">{{ blueprint.child_campaigns | length }}</p>
+                                    </div>
+                                </div>
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Unique MITRE IDs</p>
+                                        <p class="title">{{ blueprint.variants | map(attribute='tid') | unique | list | length }}</p>
+                                    </div>
+                                </div>
+                            </nav>
+                        </div>
+                    </article>
+
+                    {% if blueprint.child_groups %}
+                    <article class="message is-dark">
+                        <div class="message-header">
+                            Groups
+                        </div>
+                        <div class="message-body has-text-centered">
+                            {% for group in blueprint.child_groups | map(attribute='name') | unique %}
+                            <span class="tag is-link">{{ group }}</span>
+                            {% endfor %}
+                        </div>
+                    </article>
+                    {% endif %}
+
+                    <article class="message is-dark">
+                        <div class="message-header">
+                            Campaigns
+                        </div>
+                        <div class="message-body">
+                            <div class="columns">
+                                {% set campaign_len = blueprint.child_campaigns | list | length | int %}
+                                {% set campaign_left = (campaign_len/2)|int + (campaign_len % 2) %}
+                                <div class="column is-half">
+                                    <aside class="menu">
+                                    {% for campaign in blueprint.child_campaigns[:campaign_left] %}
+                                        <details>
+                                            <summary>{{ campaign.name }}</summary>
+                                            <ul class="menu-list">
+                                                <li>
+                                                    <ul>
+                                                    {% for variant in campaign.variants %}
+                                                        <li><a href="/bundles/{{ blueprint.id }}/{{ variant.id }}.html">{{ variant.display_name }}</a></li>
+                                                    {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </details>
+                                    {% endfor %}
+                                    </aside>
+                                </div>
+                                <div class="column is-half">
+                                    <aside class="menu">
+                                    {% for campaign in blueprint.child_campaigns[campaign_left:] %}
+                                        <details>
+                                            <summary>{{ campaign.name }}</summary>
+                                            <ul class="menu-list">
+                                                <li>
+                                                    <ul>
+                                                    {% for variant in campaign.variants %}
+                                                        <li><a href="/bundles/{{ blueprint.id }}/{{ variant.id }}.html">{{ variant.display_name }}</a></li>
+                                                    {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </details>
+                                    {% endfor %}
+                                    </aside>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    {% for name, items in linked_data.items()  %}
+                    <article class="message is-dark" id="{{ name | lower | replace(' ','') }}">
+                        <div class="message-header">
+                            {{ name }}
+                        </div>
+                        <div class="message-body">
+                            {{ items | join('<hr>') }}
+                        </div>
+                    </article>
+                    {% endfor %}
+
+                    <article class="message is-dark" id="navigator">
+                        <div class="message-header">
+                            Navigator
+                            <div>
+                                <i id="navfs" class="fas fa-up-right-and-down-left-from-center"></i>
+                            </div>
+                        </div>
+                        <div class="message-body">
+                            <figure class="image is-5by3">
+                                <!--
+                                query string params are based on the "features" stored here
+                                https://github.com/mitre-attack/attack-navigator/blob/master/nav-app/src/assets/config.json
+                                -->
+                                <iframe id="navlayer" style="transform: scale(.6); transform-origin: 0 0; width: 167%; height: 150%;" class="has-ratio" frameborder="0" src="/navigator/index.html#layerURL=/layers/{{ blueprint.id }}.json&leave_site_dialog=false    &selecting_techniques=false&header=false&tabs=false"></iframe>
+                            </figure>
+                        </div>
+                    </article>
+
+                </section>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock content %}

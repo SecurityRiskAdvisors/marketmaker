@@ -1,0 +1,44 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="columns">
+            <div class="column is-three-quarters mx-auto">
+                {% for tid, variants in all_variants | groupby('tid') %}
+                <section class="section">
+                    <div class="notification is-danger">
+                        <div class="columns">
+                            <div class="column is-half mx-auto">
+                                <p class="title is-5">[{{ tid }}] {{ tid | tid2name }}</p>
+                            </div>
+                            <div class="column is-half mx-auto has-text-centered">
+                                <span class="icon-text">
+                                    <span class="icon">
+                                        <i class="fas fa-vial-virus"></i>
+                                    </span>
+                                    <span><p class="title is-5">{{ variants | length  }}</p></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <aside class="menu">
+                        <details open>
+                            <summary>Test Cases</summary>
+                            <ul class="menu-list">
+                                <li>
+                                    <ul>
+                                    {% for variant in variants %}
+                                        <li><a href="/testcases/{{ variant.id }}.html">{{ variant.display_name }}</a></li>
+                                    {% endfor %}
+                                    </ul>
+                                </li>
+                            </ul>
+                        </details>
+                    </aside>
+                </section>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}

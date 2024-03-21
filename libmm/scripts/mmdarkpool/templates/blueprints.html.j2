@@ -1,0 +1,80 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="columns">
+            <div class="column is-three-quarters mx-auto">
+                <section class="section">
+                    <div class="notification is-danger has-text-centered">
+                        <p class="title">
+                            Latest Bundles
+                        </p>
+                    </div>
+                    <div class="columns is-multiline">
+                        {% for latest_pair in latest_blueprints %}
+                        <div class="column is-one-third">
+                            <div class="card" style="border: 1px solid lightgray; box-shadow:none;">
+                                <header class="card-header" style="border-bottom: 1px solid lightgray; box-shadow:none;">
+                                    <p class="card-header-title">{{ latest_pair[0] | upper }}</p>
+                                </header>
+                                <div class="card-content">
+                                    <div class="card-content">
+                                        <div class="content">
+                                            {{ latest_pair[1].description }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <footer class="card-footer">
+                                    <a download="{{ latest_pair[1].name }}.yml" class="card-footer-item" href="/manifests/{{ latest_pair[1].id }}.yml">
+                                        <span class="icon-text">
+                                            <span class="icon">
+                                                <i class="fas fa-download"></i>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <a href="/bundles/{{ latest_pair[1].id }}.html" class="card-footer-item">View</a>
+                                </footer>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="section">
+                    <div class="notification is-danger has-text-centered">
+                        <p class="title">
+                            All Bundles
+                        </p>
+                    </div>
+                    <div class="columns is-multiline">
+                        {% for blueprint in all_blueprints %}
+                        <div class="column is-one-third">
+                            <div class="card" style="border: 1px solid lightgray; box-shadow:none;">
+                                <header class="card-header" style="border-bottom: 1px solid lightgray; box-shadow:none;">
+                                    <p class="card-header-title">{{ blueprint.name }}</p>
+                                </header>
+                                <div class="card-content">
+                                    <div class="card-content">
+                                        <div class="content">{{ blueprint.description }}</div>
+                                    </div>
+                                </div>
+                                <footer class="card-footer">
+                                     <a download="{{ blueprint.name }}.yml" class="card-footer-item" href="/manifests/{{ blueprint.id }}.yml">
+                                        <span class="icon-text">
+                                            <span class="icon">
+                                                <i class="fas fa-download"></i>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <a href="/bundles/{{ blueprint.id }}.html" class="card-footer-item">View</a>
+                                </footer>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}

@@ -1,0 +1,198 @@
+{% extends "base.html.j2" %}
+{% block content %}
+{% set toc = [] %}
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-2">
+                    {% if blueprint %}
+                    <aside class="menu">
+                        <p class="menu-label">
+                            {{ blueprint.name }}
+                        </p>
+                        {% for campaign in blueprint.child_campaigns %}
+                            <details open>
+                                <summary>{{ campaign.name }}</summary>
+                                <ul class="menu-list">
+                                    <li>
+                                        <ul>
+                                        {% for variant in campaign.variants %}
+                                          <li><a href="/bundles/{{ blueprint.id }}/{{ variant.id }}.html">{{ variant.display_name }}</a></li>
+                                        {% endfor %}
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </details>
+                        {% endfor %}
+                    </aside>
+                    {% elif related_variants %}
+                    <aside class="menu">
+                        <p class="menu-label">
+                            [{{ variant.tid }}] {{ variant.tid | tid2name }}
+                        </p>
+                        <ul class="menu-list">
+                            {% for related_variant in related_variants %}
+                            <li><a href="/testcases/{{ related_variant.id }}.html">{{ related_variant.display_name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </aside>
+                    {% endif %}
+                </div>
+
+                <div class="column is-9">
+                    <div class="notification is-danger">
+                        <p class="title">
+                            {{ variant.display_name }}
+                        </p>
+                    </div>
+                    <section>
+                        {%- set _ = toc.append("Overview") %}
+                        <article class="message is-dark" id="overview">
+                            <div class="message-header">
+                                <div class="level-left">
+                                    Overview
+                                </div>
+                                <div class="level-right">
+                                        <p>
+                                            <span class="tag is-light">
+                                                <a style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://attack.mitre.org/techniques/{{ variant.tid | replace('.', '/') }}/">{{ variant.tid }}</a>
+                                            </span>
+                                            <span class="tag is-light">{{ variant.id }}</span>
+                                        </p>
+                                </div>
+                            </div>
+                            <div class="message-body">
+                                <div class="block">{{ variant.description }}</div>
+                                <div class="block">
+                                    <details>
+                                        <summary><u>MITRE ATT&CK description for [{{ variant.tid | tid2name }}]</u></summary>
+                                        <div id='markdown'>{{ mitre_description }}</div>
+                                    </details>
+                                </div>
+                            </div>
+                        </article>
+
+                        <div class="columns">
+                            <div class="column is-half">
+                                {%- set _ = toc.append("Metadata") %}
+                                <article class="message is-dark" id="metadata">
+                                    <div class="message-header">
+                                            Prerequisites
+                                    </div>
+                                    <div class="message-body has-text-centered">
+                                        {% if variant.prerequisites %}
+                                        {% for prerequisite in variant.prerequisites %}
+                                        <span class="tag is-link">{{ prerequisite }}</span>
+                                        {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            </div>
+                            <div class="column is-half">
+                                <article class="message is-dark">
+                                    <div class="message-header">
+                                            Platforms
+                                    </div>
+                                    <div class="message-body has-text-centered">
+                                        {% if variant.platforms %}
+                                        {% for platform in variant.platforms %}
+                                        <span class="tag is-link">{{ platform }}</span>
+                                        {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+
+                        {% if variant.guidance %}
+                        {%- set _ = toc.append("Commands") %}
+                        <article class="message is-dark" id="commands">
+                            <div class="message-header">
+                                Commands
+                                <div onclick="navigator.clipboard.writeText(document.getElementById('guidance').innerText);">
+                                    <i class="fas fa-copy"></i>
+                                </div>
+                            </div>
+                            <div class="message-body">
+                                <pre><code class="nohighlight" id='guidance'>{{ guidance }}</code></pre>
+                            </div>
+                        </article>
+                        {% endif %}
+
+                        {%- set _ = toc.append("Controls") %}
+                        <article class="message is-dark" id="controls">
+                            <div class="message-header">
+                                    <div class="level-left">
+                                        Controls
+                                    </div>
+                                    <div class="level-right">
+                                            <p>
+                                                {% if variant.controls %}
+                                                {% for control in variant.controls %}
+                                                <span class="tag is-light">{{ control }}</span>
+                                                {% endfor %}
+                                                {% endif %}
+                                            </p>
+                                    </div>
+                                </div>
+                                <div class="message-body">
+                                    <div class="columns">
+                                        <div class="column">
+                                            <h4 class="title is-5">Detect</h4>
+                                            <div class="content">
+                                                <ul>
+                                                    {% if variant.detect %}
+                                                    {% for detect in variant.detect %}
+                                                    <li>{{ detect }}</li>
+                                                    {% endfor %}
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="column">
+                                            <h4 class="title is-5">Block</h4>
+                                            <div class="content">
+                                                <ul>
+                                                    {% if variant.block %}
+                                                    {% for block in variant.block %}
+                                                    <li>{{ block }}</li>
+                                                    {% endfor %}
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        </article>
+
+                        {% for name, items in linked_data.items()  %}
+                        {%- set _ = toc.append(name) %}
+                        <article class="message is-dark" id="{{ name | lower | replace(' ','') }}">
+                            <div class="message-header">
+                                {{ name }}
+                            </div>
+                            <div class="message-body">
+                                {{ items | join('<hr>') }}
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </section>
+                </div>
+
+                <div class="column is-1">
+                    <aside class="menu">
+                        <p class="menu-label">
+                            Contents
+                        </p>
+                        <ul class="menu-list">
+                            {% for item in toc %}
+                            <li><a href="#{{ item | lower | replace(' ','') }}">{{ item }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </aside>
+                </div>
+
+            </div>
+        </div>
+    </section>
+{% endblock content %}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <head>
+        <title>Market Maker Darkpool</title>
+
+        <!-- Bulma -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+              integrity="sha256-rTpdO0HXBCNpreAHcu6tB2Ppg515Vo+5GtYSsnNLz+8="
+              crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+              integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+              crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+        <!-- highlights and makdown -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"
+              integrity="sha512-hasIneQUHlh06VNBe7f6ZcHmeRTLIaQWFd43YriJ0UND19bvYRauxthDg8E4eVNPm9bRUhr5JGeqH7FRFXQu5g=="
+              crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+                integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://www.unpkg.com/commonmark@0.31.0/dist/commonmark.js"
+                integrity="sha384-MHfd2Pg1LcuroEZr0Z/8qnwx3xqn1Rh6UxI3Ev7YZQvYSP5F0+p5wUJcMUptpsaA"
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // commonmark renderer
+                var reader = new commonmark.Parser();
+                var writer = new commonmark.HtmlRenderer();
+
+                // render markdown
+                var elements_markdown = document.querySelectorAll('[id=markdown]');
+                elements_markdown.forEach((element) => {
+                    var parsed = reader.parse(element.textContent || element.innerText);
+                    element.innerHTML = writer.render(parsed);
+                });
+
+                // modify rendered elements
+                var elements_rendered = document.querySelectorAll('[id=markdown]');
+                elements_rendered.forEach((element) => {
+                    // set all code blocks to be Bash for highlightjs
+                    var code_elements = element.querySelectorAll('pre > code');
+                    code_elements.forEach((code_element) => {
+                        code_element.classList.add("language-bash");
+                    });
+
+                    // apply bulma stylings
+                    var h2_elements = element.querySelectorAll('h2');
+                    h2_elements.forEach((h2_element) => {
+                        h2_element.classList.add("title");
+                        h2_element.classList.add("is-5");
+                    });
+
+                    var p_elements = element.querySelectorAll('p');
+                    p_elements.forEach((p_element) => {
+                        p_element.classList.add("content");
+                    });
+
+                    var h3_elements = element.querySelectorAll('h3');
+                    h3_elements.forEach((h3_element) => {
+                        h3_element.classList.add("title");
+                        h3_element.classList.add("is-6");
+                    });
+
+                    var pre_elements = element.querySelectorAll('pre');
+                    pre_elements.forEach((pre_element) => {
+                        pre_element.classList.add("block");
+                    });
+                });
+
+                // apply highlighting
+                hljs.highlightAll();
+            });
+        </script>
+
+        {% block headlinks %}
+        {% endblock %}
+    </head>
+    <body>
+        <nav class="navbar is-dark is-spaced" role="navigation" aria-label="main navigation">
+            <div class="container">
+                 <div class="navbar-menu is-active">
+                    <div class="navbar-start is-justify-content-center is-flex-grow-1">
+                        <a class="navbar-item mx-6 is-size-5" href="/bundles.html">
+                            <span class="icon-text">
+                                <span class="icon">
+                                    <i class="fas fa-folder-open"></i>
+                                </span>
+                                <span>Bundles</span>
+                            </span>
+                        </a>
+                        <a href="/index.html">
+                            <span class="tag is-danger is-size-4">
+                                <span class="icon-text">
+                                    <span class="icon">
+                                        <i class="fas fa-arrow-trend-up"></i>
+                                    </span>
+                                    <span>Darkpool</span>
+                                </span>
+                            </span>
+                        </a>
+                        <a class="navbar-item mx-6 is-size-5" href="/testcases.html">
+                            <span class="icon-text">
+                                <span class="icon">
+                                    <i class="fas fa-vial-virus"></i>
+                                </span>
+                                <span>Test Cases</span>
+                            </span>
+                        </a>
+                    </div>
+                 </div>
+            </div>
+        </nav>
+        {% block content %}
+        {% endblock content %}
+    </body>
+</html>
