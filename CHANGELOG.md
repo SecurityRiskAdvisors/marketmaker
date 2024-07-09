@@ -1,3 +1,10 @@
+****
+
+# Version 1.3.0 - July 2024
+
+- Update data resources
+- Fix bug in Navigator layer generation
+
 ***
 
 # Version 1.2.0 - March 2024

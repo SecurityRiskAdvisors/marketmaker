@@ -3,6 +3,7 @@ from functools import lru_cache
 from dataclasses import dataclass, field, asdict
 from abc import abstractmethod, ABC
 from stix2 import MemoryStore, Filter
+from copy import deepcopy
 
 from .type import Set, List, TypeVar, StrSetOrList
 from .utils import strip_strlist, COLORS, load_json_from_file, deep_get
@@ -178,7 +179,7 @@ def tids_to_layer_dicts(tids: List[str], *args, **kwargs) -> List[dict]:
     # this method will enable only the provided TIDs and their parents
     #   and disable all others in order to make use in the Navigator app
     #   easier (e.g. you can hide all disabled items)
-    cti_tids = get_cti_tids()
+    cti_tids = deepcopy(get_cti_tids())
     techniques = _process_tid_to_technique(tids=tids, cti_tids=cti_tids, *args, **kwargs)
 
     for cti_tid in cti_tids:
@@ -189,7 +190,7 @@ def tids_to_layer_dicts(tids: List[str], *args, **kwargs) -> List[dict]:
 
 def merged_tids_to_layer_dicts(tids1: List[str], tids2: List[str]) -> List[dict]:
     """given two lists of tids, create a merged list and colorize the lists differently based on overlap"""
-    cti_tids = get_cti_tids()
+    cti_tids = deepcopy(get_cti_tids())
     techniques = []
 
     set1 = set(tids1)
