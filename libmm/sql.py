@@ -507,6 +507,7 @@ class LinkedDataFormat(CaseInsensitiveEnum):
     # reStructuredText = auto()
     YAML = auto()
     JSON = auto()
+    Unformatted = auto()  # do nothing
 
 
 class LinkedData(SQLModel, table=True):
