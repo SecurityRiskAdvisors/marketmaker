@@ -1,4 +1,10 @@
-****
+***
+
+# Version 1.4.0 - July 2024
+
+- Added a new linked data format ("Unformatted") 
+
+***
 
 # Version 1.3.0 - July 2024
 
