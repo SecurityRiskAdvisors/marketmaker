@@ -136,6 +136,8 @@ def format_linked_data(linked_data: LinkedData):
         data = f"<div id='markdown'>{data}</div>"
     elif linked_data.data_format in [LinkedDataFormat.YAML, LinkedDataFormat.JSON]:
         data = f"<pre><code>{data}</code><pre>"
+    elif linked_data.data_format == LinkedDataFormat.Unformatted:
+        pass
 
     return data
 
