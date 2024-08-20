@@ -139,7 +139,7 @@ class SigmaHook(AbstractUserHook):
             self._first_loaded = True
 
     def populate_linked_data(self):
-        if not self._link_populated:
+        if not self._link_populated and self.enabled:
             for rule in session.query(SigmaRule).all():  # type: SigmaRule
                 session.add(
                     LinkedData(
