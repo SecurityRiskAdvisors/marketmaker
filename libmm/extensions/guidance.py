@@ -288,7 +288,7 @@ class GuidanceHook(AbstractUserHook):
         """
         Adds the per-Variant guidance to the linked data table
         """
-        if not self._link_populated:
+        if not self._link_populated and self.enabled:
             if mappings := session.query(GuidanceMapping).all():
                 # since the lookup here is for all items mapped to the variant/bp id
                 # this keeps track of the processed ids then short circuits

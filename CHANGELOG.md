@@ -1,5 +1,11 @@
 ***
 
+# Version 1.5.0 - August 2024
+
+- Fix bug with extensions when using linked data
+
+***
+
 # Version 1.4.0 - July 2024
 
 - Added a new linked data format ("Unformatted") 
