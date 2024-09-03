@@ -22,8 +22,6 @@ Options:
   -s, --summary FILE          Summary CSV output file
   -n, --navigator FILE        MITRE Navigator layer output file
   -i, --sublibrary DIRECTORY  Sublibrary directory
-  -p, --partials-path FILE    Path to partials YAML file. Will override
-                              partials path set via env var.
   --help                      Show this message and exit.
   <extension-specific options>
 ```
