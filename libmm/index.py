@@ -4,7 +4,7 @@ import shutil
 from enum import auto
 
 from .type import StrOrPath, List
-from .utils import resolve_str_or_path, dump_yaml_to_file, compare_set_overlap
+from .utils import resolve_str_or_path, dump_yaml_to_file, compare_set_overlap, deep_get
 from .mitre import generate_latest_navlayer, generate_latest_comparison_layer
 from .sql import Blueprint, BlueprintCampaign
 
@@ -74,7 +74,9 @@ def gen_summary_csv_from_blueprint(blueprint: Blueprint) -> str:
     summary.writerow(["Test Case", "MITRE ID", "Campaign", "Description"])
     for campaign in blueprint.child_campaigns:
         for variant in campaign.variants:
-            summary.writerow([variant.display_name, variant.tid, campaign.name, variant.description])
+            rendered = variant.render(apply_overrides=True, blueprint_id=blueprint.id)
+            tid = deep_get(rendered, ["metadata", "tid"])
+            summary.writerow([rendered.get("name"), tid, campaign.name, rendered.get("description")])
 
     out_str.seek(0)
     summary_str = out_str.read()

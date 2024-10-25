@@ -1,5 +1,11 @@
 ***
 
+# Version 1.5.2 - October 2024
+
+- Fix bug with overrides not applying for CSV output
+
+***
+
 # Version 1.5.1 - October 2024
 
 - Fix bug with overrides applying incorrectly 
