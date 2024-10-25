@@ -1,5 +1,11 @@
 ***
 
+# Version 1.5.1 - October 2024
+
+- Fix bug with overrides applying incorrectly 
+
+***
+
 # Version 1.5.0 - August 2024
 
 - Fix bug with extensions when using linked data

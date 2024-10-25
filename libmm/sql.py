@@ -207,9 +207,12 @@ class Variant(SQLModel, table=True):
             if override:
                 # doing this individually as overrides only cover a few fields
                 # in the future, might do this more dynamically
-                metadata["x_references"] = override.references
-                final_dict["name"] = override.display_name
-                final_dict["guidance"] = override.guidance
+                if override.references:
+                    metadata["x_references"] = override.references
+                if override.display_name:
+                    final_dict["name"] = override.display_name
+                if override.guidance:
+                    final_dict["guidance"] = override.guidance
 
         # add groups if feature is enabled
         if global_settings.add_groups:
