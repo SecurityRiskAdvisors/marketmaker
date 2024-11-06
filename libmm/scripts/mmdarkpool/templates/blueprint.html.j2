@@ -56,7 +56,10 @@
                         </div>
                         <div class="level-right">
                             <a download="{{ blueprint.name }}.yml" href="/manifests/{{ blueprint.id }}.yml">
-                                <i class="fas fa-download fa-lg"></i>
+                                <i class="fas fa-download fa-lg mr-3" title="YAML download"></i>
+                            </a>
+                            <a download="{{ blueprint.name }}.csv" href="/summaries/{{ blueprint.id }}.csv">
+                                <i class="fas fa-file-csv fa-lg" title="CSV download"></i>
                             </a>
                         </div>
                     </nav>

@@ -186,6 +186,7 @@ class GuidanceMapping(SQLModel, table=True):
     guidance_anchor: int = Field(foreign_key="guidancedocument.anchor")
     target_id: str  # id of target
     target_type: Optional[GuidanceTarget] = Field(sa_column=Column(SAEnum(GuidanceTarget)), nullable=True)
+    scope: str = Field(default="default")
 
     @classmethod
     def update_target_ids(cls):
@@ -211,19 +212,21 @@ class GuidanceMapping(SQLModel, table=True):
         # this should prevent duplicate entries when multiple guidance docs are mapped to
         #   one target
         mappings: List[tuple] = (
-            session.query(GuidanceMapping.target_id, GuidanceMapping.target_type)
+            session.query(GuidanceMapping)
             .distinct(GuidanceMapping.target_id, GuidanceMapping.target_type)
             .filter(GuidanceMapping.target_type.isnot(None))
             .all()
         )
-        for target_id, target_type in mappings:
-            docs = GuidanceMapping.get_document_contents_for_object(target_type=target_type, target_id=target_id)
+        for mapping in mappings:  # type: GuidanceMapping
+            docs = GuidanceMapping.get_document_contents_for_object(
+                target_type=mapping.target_type, target_id=mapping.target_id
+            )
             if docs_ldata := fmt_ldata_documents(docs):
                 session.add(
                     LinkedData(
-                        blueprint_id=target_id if target_type == GuidanceTarget.Blueprint else None,
-                        variant_id=target_id if target_type == GuidanceTarget.Variant else None,
-                        target_type=LinkedDataTarget(target_type.name),
+                        blueprint_id=mapping.target_id if mapping.target_type == GuidanceTarget.Blueprint else None,
+                        variant_id=mapping.target_id if mapping.target_type == GuidanceTarget.Variant else None,
+                        target_type=LinkedDataTarget(mapping.target_type.name),
                         data_format=LinkedDataFormat.Markdown,
                         data=docs_ldata,
                         origin=hook.name,
@@ -239,6 +242,9 @@ class GuidanceMapping(SQLModel, table=True):
         if len(mappings) > 0:
             document_bodies = []
             for mapping in mappings:  # type: GuidanceMapping
+                if mapping.scope not in hook.scopes:
+                    continue
+
                 documents: List[GuidanceDocument] = (
                     session.query(GuidanceDocument)
                     .filter(
@@ -262,16 +268,11 @@ class GuidanceMapping(SQLModel, table=True):
             for properties in properties_list:
                 guidance_id = properties.get("id", None)
                 guidance_entry = properties.get("entry", None)
+                scope = properties.get("scope", "default")
                 if not guidance_id or not guidance_entry:
                     logger.warn(f'Invalid mapping format for entry ID "{uuid}"')
                     continue
-                session.add(
-                    cls(
-                        guidance_id=guidance_id,
-                        guidance_anchor=guidance_entry,
-                        target_id=uuid,
-                    )
-                )
+                session.add(cls(guidance_id=guidance_id, guidance_anchor=guidance_entry, target_id=uuid, scope=scope))
         session.commit()
 
     @classmethod
@@ -283,6 +284,7 @@ class GuidanceSettings(Enum):
     Paths = auto()
     OpNotebook = auto()
     Mapping = auto()
+    Scopes = auto()
 
 
 class GuidanceHook(AbstractUserHook):
@@ -292,6 +294,7 @@ class GuidanceHook(AbstractUserHook):
             GuidanceSettings.Paths: NoCliHookSetting(name="paths", parent=self),
             GuidanceSettings.Mapping: NoCliHookSetting(name="mapping", parent=self),
             GuidanceSettings.OpNotebook: UserHookSetting(name="opnotebook", parent=self),
+            GuidanceSettings.Scopes: UserHookSetting(name="scopes", parent=self),
         }
 
         self._mapping = None
@@ -313,6 +316,19 @@ class GuidanceHook(AbstractUserHook):
     def get_value(self, setting: GuidanceSettings):
         return self.__settings.get(setting).value
 
+    @property
+    def scopes(self):
+        if (value := self.get_value(GuidanceSettings.Scopes)) not in ["", None]:
+            if "," in value:
+                scopes = value.split(",")
+                scopes = [scope.strip() for scope in scopes]
+            else:
+                scopes = [value.strip()]
+        else:
+            scopes = ["default"]
+
+        return scopes
+
     def do_first_load(self):
         """
         Initial data loading of documents and mapping.
@@ -326,7 +342,13 @@ class GuidanceHook(AbstractUserHook):
 
     def hook(self, event_type, context):
         if event_type == EventTypes.CliStart:
-            self.do_start(required_settings=self.settings)
+            self.do_start(
+                required_settings=[
+                    self.__settings[GuidanceSettings.Mapping],
+                    self.__settings[GuidanceSettings.Paths],
+                    self.__settings[GuidanceSettings.OpNotebook],
+                ]
+            )
             self._is_cli = True
 
         if event_type == EventTypes.DbReady:
@@ -392,11 +414,12 @@ class GuidanceHook(AbstractUserHook):
                     if doc not in campaign_docs:
                         campaign_docs.add(doc)
 
-            notebook += f"# {campaign.name}"
-            notebook += MARKDOWN_NEWLINE
-            for doc in campaign_docs:
-                notebook += doc
+            if len(campaign_docs) > 0:
+                notebook += f"# {campaign.name}"
                 notebook += MARKDOWN_NEWLINE
+                for doc in campaign_docs:
+                    notebook += doc
+                    notebook += MARKDOWN_NEWLINE
 
         self._notebook = condense_spaces(notebook)
 

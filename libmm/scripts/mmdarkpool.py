@@ -13,7 +13,7 @@ from libmm.extension import extensions_manager, EventPairs
 from libmm.utils import load_json_from_file, dump_yaml_to_file, dump_json_to_file
 from libmm.type import List, Tuple, Optional
 from libmm.scripts.shared import SharedOptions, validate_multi_directory
-from libmm.index import gen_blueprint_export, BlueprintExport
+from libmm.index import gen_blueprint_export, BlueprintExport, gen_summary_csv_from_blueprint
 from libmm.mitre import get_cti_store, Filter
 
 global_settings.run_checks = False
@@ -104,6 +104,7 @@ class StaticDirectories:
     NavigatorLayers = "layers"
     NavigatorUI = "navigator"
     Addons = "addons"
+    Summaries = "summaries"
 
 
 class SitePaths:
@@ -119,6 +120,7 @@ class SitePaths:
     NavigatorLayer = StaticDirectories.NavigatorLayers + "/{blueprint_id}.json"
     BlueprintRta = StaticDirectories.Addons + "/rta/{blueprint_id}.py"
     Manifest = StaticDirectories.Manifests + "/{blueprint_id}.yml"
+    Summaries = StaticDirectories.Summaries + "/{blueprint_id}.csv"
 
 
 def format_linked_data(linked_data: LinkedData):
@@ -358,6 +360,10 @@ def html(techniques, blueprint_paths, latest_json, output_directory, nav_directo
         layer["versions"] = {"layer": "4.5"}
         layer_file = SitePaths.NavigatorLayer.format(blueprint_id=blueprint.id)
         dump_json_to_file(layer, output_directory.joinpath(layer_file))
+
+        summary_csv = gen_summary_csv_from_blueprint(blueprint=blueprint)
+        csv_file = SitePaths.Summaries.format(blueprint_id=blueprint.id)
+        output_directory.joinpath(csv_file).write_text(summary_csv)
 
     # alias bundle listing to index
     shutil.copy(output_directory.joinpath(SitePaths.Blueprints), output_directory.joinpath(SitePaths.Index))

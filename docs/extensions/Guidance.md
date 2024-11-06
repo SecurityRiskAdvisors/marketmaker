@@ -139,6 +139,7 @@ map:
 ```yaml
 id: String!
 entry: Integer!
+scope: String
 ```
 
 Example:
@@ -153,6 +154,42 @@ where `30500c37-e898-4c62-a0e4-c4ce2fedc473` is the variant ID, `ba172c9d-a689-4
 
 Additionally, you can map guidance to a Blueprint by providing the Blueprint ID in place of the Variant ID. Guidance mapped to a Blueprint will be placed under a `General` section rather than a specific campaign section.
 
+`scope` defines the guidance scope (only one scope; see below).
+
+## Guidance Scopes
+
+Guidance scopes allow you to restrict when operator guidance appears in the merged notebook (and in the [linked data table](../Extensions.md)). Scopes are arbitrary strings.
+
+By default, all document are scoped to the `default` scope. 
+
+If you provide a `scope` property in the mapping, the guidance in that mapping entry will only be included when that scope is enabled via the scope setting.
+Scopes work additively, so providing multiple scopes will include all documents matching any of the scopes.
+
+Example:
+
+```yaml
+b2f7345d-aeb5-45a2-813f-79d87f42fbbf:
+- id: 304a3673-34d7-4fa4-94e4-39645d1c8802
+  entry: 1
+- id: 45dc5351-5ff9-4128-9dd3-4b3f36cb79b5
+  entry: 1
+  scope: internal
+0f3342ca-9104-4a5a-bcec-17869714eb22:
+- id: a569918c-a1a4-482d-b5db-b3607eea777c
+  entry: 1
+```
+Run #1: 
+- Scope: *unspecified*
+- Result: Notebook contains only 304a3673-34d7-4fa4-94e4-39645d1c8802#1 and a569918c-a1a4-482d-b5db-b3607eea777c#1
+
+Run #2: 
+- Scope: internal
+- Result: Notebook contains only 45dc5351-5ff9-4128-9dd3-4b3f36cb79b5#1
+
+Run #3: 
+- Scope: internal, default
+- Result: Notebook contains all three items
+
 ## Settings
 
 |Arg|Variable|Description|Notes|
@@ -160,3 +197,4 @@ Additionally, you can map guidance to a Blueprint by providing the Blueprint ID 
 ||LIBMM_GUIDANCE_PATHS|":"-delimited list of paths for guidance documents||
 ||LIBMM_GUIDANCE_MAPPING|Path to mappings file||
 |--guidance-opnotebook|LIBMM_GUIDANCE_OPNOTEBOOK|Path to output Markdown file||
+|--guidance-scopes|LIBMM_GUIDANCE_SCOPES|Comma-separated list of scopes|Defaults to "default"|

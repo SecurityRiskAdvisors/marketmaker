@@ -1,5 +1,12 @@
 ***
 
+# Version 1.7.0 - November 2024
+
+- Added summary CSV download button to Darkpool
+- Added scoping functionality to Guidance extension
+
+***
+
 # Version 1.6.0 - November 2024
 
 - Fix multiple bugs in Guidance extension
