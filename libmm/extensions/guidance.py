@@ -3,7 +3,7 @@ from enum import Enum, auto
 from typing import List
 import click
 from uuid import uuid4
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Enum as SAEnum, event
 
 from libmm.sql import (
     SQLModel,
@@ -12,6 +12,7 @@ from libmm.sql import (
     Field,
     Variant,
     Blueprint,
+    BlueprintCampaign,
     LinkedData,
     LinkedDataTarget,
     LinkedDataFormat,
@@ -51,10 +52,10 @@ class GuidanceDocument(SQLModel, table=True):
         h1
           |- title
           |- description
-          \_ h2
+          \\_ h2
               |- title & anchor
               |- description
-              \_ h3
+              \\_ h3
                 ...
           ...
 
@@ -116,7 +117,7 @@ class GuidanceDocument(SQLModel, table=True):
         md_split = markdown.split("---")
         front_matter = {}
         if len(md_split) > 1:
-            markdown = md_split[2]
+            markdown = "".join(md_split[2:])
             front_matter = get_yaml_o().load(md_split[1])
         try:
             guidance_id = front_matter["x_guidance_id"]
@@ -173,29 +174,80 @@ class GuidanceDocument(SQLModel, table=True):
         return guides
 
 
+class GuidanceTarget(Enum):
+    Variant = auto()
+    Blueprint = auto()
+
+
 class GuidanceMapping(SQLModel, table=True):
     id: int = Field(primary_key=True)
+    # TODO: sqla rels
     guidance_id: str = Field(foreign_key="guidancedocument.uuid")
     guidance_anchor: int = Field(foreign_key="guidancedocument.anchor")
-    variant_id: Optional[str] = Field(foreign_key="variant.id", nullable=True)
-    blueprint_id: Optional[str] = Field(foreign_key="blueprint.id", nullable=True)
+    target_id: str  # id of target
+    target_type: Optional[GuidanceTarget] = Field(sa_column=Column(SAEnum(GuidanceTarget)), nullable=True)
 
     @classmethod
-    def get_document_contents_for_object(cls, object_attribute, object_id: str):
-        mappings = session.query(cls).filter(object_attribute == object_id).all()
-        if len(mappings) > 0:
-            all_documents: List[GuidanceDocument] = []
+    def update_target_ids(cls):
+        variants = session.query(Variant).all()
+        variant_ids = [v.id for v in variants]
+        blueprints = session.query(Blueprint).all()
+        blueprint_ids = [b.id for b in blueprints]
+
+        if mappings := session.query(GuidanceMapping).all():
             for mapping in mappings:  # type: GuidanceMapping
-                all_documents.extend(
+                if mapping.target_id in blueprint_ids:
+                    mapping.target_type = GuidanceTarget.Blueprint
+                elif mapping.target_id in variant_ids:
+                    mapping.target_type = GuidanceTarget.Variant
+                else:
+                    logger.warn(f'Could not locate target with ID "{mapping.target_id}"')
+                    continue
+            session.commit()
+
+    @classmethod
+    def populate_linked_data(cls):
+        # get a list of unique ids per type then populate the linked data table for them
+        # this should prevent duplicate entries when multiple guidance docs are mapped to
+        #   one target
+        mappings: List[tuple] = (
+            session.query(GuidanceMapping.target_id, GuidanceMapping.target_type)
+            .distinct(GuidanceMapping.target_id, GuidanceMapping.target_type)
+            .filter(GuidanceMapping.target_type.isnot(None))
+            .all()
+        )
+        for target_id, target_type in mappings:
+            docs = GuidanceMapping.get_document_contents_for_object(target_type=target_type, target_id=target_id)
+            if docs_ldata := fmt_ldata_documents(docs):
+                session.add(
+                    LinkedData(
+                        blueprint_id=target_id if target_type == GuidanceTarget.Blueprint else None,
+                        variant_id=target_id if target_type == GuidanceTarget.Variant else None,
+                        target_type=LinkedDataTarget(target_type.name),
+                        data_format=LinkedDataFormat.Markdown,
+                        data=docs_ldata,
+                        origin=hook.name,
+                        display_name="Operator Guidance",
+                    )
+                )
+                session.commit()
+
+    @classmethod
+    def get_document_contents_for_object(cls, target_type: GuidanceTarget, target_id) -> [str]:
+        document_bodies = []
+        mappings = session.query(cls).filter(cls.target_id == target_id, cls.target_type == target_type).all()
+        if len(mappings) > 0:
+            document_bodies = []
+            for mapping in mappings:  # type: GuidanceMapping
+                documents: List[GuidanceDocument] = (
                     session.query(GuidanceDocument)
                     .filter(
                         GuidanceDocument.uuid == mapping.guidance_id, GuidanceDocument.anchor == mapping.guidance_anchor
                     )
                     .all()
                 )
-            if len(all_documents) > 0:
-                return [document.content for document in all_documents]
-        return []
+                document_bodies.extend([document.content for document in documents])
+        return document_bodies
 
     @classmethod
     def from_mapping_yaml(cls, mapping: dict):
@@ -213,26 +265,14 @@ class GuidanceMapping(SQLModel, table=True):
                 if not guidance_id or not guidance_entry:
                     logger.warn(f'Invalid mapping format for entry ID "{uuid}"')
                     continue
-
-                if session.query(Blueprint).filter(Blueprint.id == uuid).first():
-                    session.add(
-                        cls(guidance_id=guidance_id, guidance_anchor=guidance_entry, variant_id=None, blueprint_id=uuid)
+                session.add(
+                    cls(
+                        guidance_id=guidance_id,
+                        guidance_anchor=guidance_entry,
+                        target_id=uuid,
                     )
-                else:
-                    if session.query(Variant).filter(Variant.id == uuid).first():
-                        session.add(
-                            cls(
-                                guidance_id=guidance_id,
-                                guidance_anchor=guidance_entry,
-                                variant_id=uuid,
-                                blueprint_id=None,
-                            )
-                        )
-                    # only need to warn on the variant otherwise you would trigger a warning
-                    # when you load a mapping with a blueprint not currently being loaded
-                    else:
-                        logger.warn(f'Could not find Variant for guidance ID "{guidance_id}"')
-                session.commit()
+                )
+        session.commit()
 
     @classmethod
     def from_mapping_file(cls, path: StrOrPath):
@@ -260,6 +300,7 @@ class GuidanceHook(AbstractUserHook):
 
         self._first_loaded = False
         self._link_populated = False
+        self._is_cli = False
 
     @property
     def name(self):
@@ -274,89 +315,35 @@ class GuidanceHook(AbstractUserHook):
 
     def do_first_load(self):
         """
-        Initial data loading of documents and variant<->document mappings.
+        Initial data loading of documents and mapping.
         This should only run once, regardless of the initial triggering mechanism
         """
         if not self._first_loaded:
-            create_all_tables()
             GuidanceDocument.load_all_from_paths(paths=self.get_value(GuidanceSettings.Paths).split(":"))
             GuidanceMapping.from_mapping_file(self.get_value(GuidanceSettings.Mapping))
 
             self._first_loaded = True
 
-    def populate_linked_data(self):
-        """
-        Adds the per-Variant guidance to the linked data table
-        """
-        if not self._link_populated and self.enabled:
-            if mappings := session.query(GuidanceMapping).all():
-                # since the lookup here is for all items mapped to the variant/bp id
-                # this keeps track of the processed ids then short circuits
-                # so as note to populate the link table with duplicates per id
-                # TODO: can probably replace this with sql querying that groups results by id
-                v_ids = []
-                bp_ids = []
-                for mapping in mappings:  # type: GuidanceMapping
-                    if mapping.variant_id:
-                        o_id = mapping.variant_id
-                        o_attribute = GuidanceMapping.variant_id
-                        ld_type = LinkedDataTarget.Variant
-                        if mapping.variant_id in v_ids:
-                            continue
-                        else:
-                            v_ids.append(mapping.variant_id)
-                    elif mapping.blueprint_id:
-                        o_id = mapping.blueprint_id
-                        o_attribute = GuidanceMapping.blueprint_id
-                        ld_type = LinkedDataTarget.Blueprint
-                        if mapping.blueprint_id in bp_ids:
-                            continue
-                        else:
-                            bp_ids.append(mapping.blueprint_id)
-                    else:
-                        continue
-
-                    docs = GuidanceMapping.get_document_contents_for_object(
-                        object_attribute=o_attribute, object_id=o_id
-                    )
-                    if len(docs) > 1:
-                        document = f"{MARKDOWN_NEWLINE}---{MARKDOWN_NEWLINE}".join(docs)
-                    elif len(docs) == 1:
-                        document = docs[0]
-                    else:
-                        continue
-
-                    session.add(
-                        LinkedData(
-                            variant_id=mapping.variant_id if mapping.variant_id else None,
-                            blueprint_id=mapping.blueprint_id if mapping.blueprint_id else None,
-                            target_type=ld_type,
-                            data_format=LinkedDataFormat.Markdown,
-                            data=document,
-                            origin=self.name,
-                            display_name="Operator Guidance",
-                        )
-                    )
-
-            session.commit()
-            self._link_populated = True
-
     def hook(self, event_type, context):
         if event_type == EventTypes.CliStart:
             self.do_start(required_settings=self.settings)
+            self._is_cli = True
 
-        if event_type == EventTypes.LinkTableReady:
+        if event_type == EventTypes.DbReady:
+            create_all_tables()
             self.do_start(
                 required_settings=[self.__settings[GuidanceSettings.Mapping], self.__settings[GuidanceSettings.Paths]]
             )
-            self.populate_linked_data()
 
         if self.enabled:
+            if event_type == EventTypes.LinkTableReady:
+                self.do_ld_load()
+
             if event_type == EventTypes.CliExit:
                 self.do_exit()
 
-            if event_type == EventTypes.BlueprintLoaded:
-                self.do_load(context)
+            if event_type == EventTypes.BlueprintLoaded and self._is_cli:
+                self.do_bp_load(context)
 
     def do_start(self, required_settings: List[UserHookSettingT]):
         if not all([setting.value not in [None, ""] for setting in required_settings]):
@@ -371,34 +358,70 @@ class GuidanceHook(AbstractUserHook):
         outpath.write_text(self._notebook)
         click.echo(f"{OutputPrefixes.Good} Writing operator notebook to {outpath.as_posix()}")
 
-    def do_load(self, context: BlueprintLoadedContext):
+    def do_ld_load(self):
+        GuidanceMapping.update_target_ids()
+        if not self._link_populated:
+            GuidanceMapping.populate_linked_data()
+            self._link_populated = True
+
+    def do_bp_load(self, context: BlueprintLoadedContext):
+        # GuidanceMapping.update_target_ids()
+
         notebook = ""
-        sections = {}
-
         blueprint = context.blueprint
-        # blueprint = session.query(Blueprint).filter(Blueprint.id==blueprint_id).first()
 
-        blueprint_docs = GuidanceMapping.get_document_contents_for_object(
-            object_attribute=GuidanceMapping.blueprint_id, object_id=blueprint.id
-        )
-        sections.setdefault("General", []).extend(blueprint_docs)
-
-        for campaign in blueprint.child_campaigns:
-            for variant in campaign.variants:  # type: Variant
-                variant_docs = GuidanceMapping.get_document_contents_for_object(
-                    object_attribute=GuidanceMapping.variant_id, object_id=variant.id
-                )
-                sections.setdefault(campaign.name, []).extend(variant_docs)
-
-        # construct merged document
-        for campaign, guides in sections.items():
-            notebook += f"# {campaign}"
+        if blueprint_docs := GuidanceMapping.get_document_contents_for_object(
+            target_type=GuidanceTarget.Blueprint, target_id=blueprint.id
+        ):
+            notebook += f"# General"
             notebook += MARKDOWN_NEWLINE
-            for guide in guides:
-                notebook += guide
+            for doc in blueprint_docs:
+                notebook += doc
+                notebook += MARKDOWN_NEWLINE
+
+        for campaign in blueprint.child_campaigns:  # type: BlueprintCampaign
+            campaign_docs = set()
+
+            for variant in campaign.variants:  # type: Variant
+                for doc in GuidanceMapping.get_document_contents_for_object(
+                    target_type=GuidanceTarget.Variant, target_id=variant.id
+                ):
+                    # handle when one doc is mapped to multiple variants
+                    # this is done a per-campaign basis
+                    #   e.g. no dupes in a campaign, but dupes okay across campaigns
+                    if doc not in campaign_docs:
+                        campaign_docs.add(doc)
+
+            notebook += f"# {campaign.name}"
+            notebook += MARKDOWN_NEWLINE
+            for doc in campaign_docs:
+                notebook += doc
                 notebook += MARKDOWN_NEWLINE
 
         self._notebook = condense_spaces(notebook)
 
 
 hook = GuidanceHook()
+
+
+def fmt_ldata_documents(documents: List[str]) -> str | None:
+    if len(documents) > 1:
+        return f"{MARKDOWN_NEWLINE}---{MARKDOWN_NEWLINE}".join(documents)
+    elif len(documents) == 1:
+        return documents[0]
+    else:
+        return
+
+
+@event.listens_for(Blueprint, "before_insert")
+def recv_blueprint_before_insert(mapper, connection, target: Blueprint):
+    session.query(GuidanceMapping).filter(GuidanceMapping.target_id == target.id).update(
+        {GuidanceMapping.target_type: GuidanceTarget.Blueprint}
+    )
+
+
+@event.listens_for(Variant, "before_insert")
+def recv_variant_before_insert(mapper, connection, target: Variant):
+    session.query(GuidanceMapping).filter(GuidanceMapping.target_id == target.id).update(
+        {GuidanceMapping.target_type: GuidanceTarget.Variant}
+    )

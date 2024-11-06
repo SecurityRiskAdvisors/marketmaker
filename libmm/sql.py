@@ -1,5 +1,5 @@
 from sqlmodel import create_engine, Field, String, Relationship
-from sqlalchemy import Column, Enum as SAEnum
+from sqlalchemy import Column, Enum as SAEnum, UniqueConstraint
 from sqlalchemy.orm import sessionmaker, scoped_session
 import sqlalchemy.types as sa_types
 from uuid import uuid4
@@ -305,10 +305,10 @@ class Blueprint(SQLModel, table=True):
 
     The hierarchy of classes is as follows:
         Blueprint
-        \_ Campaign 1
-           \_ Variant 1
-        \_ Campaign 2
-           \_ Variant 2
+        \\_ Campaign 1
+           \\_ Variant 1
+        \\_ Campaign 2
+           \\_ Variant 2
 
     SQLAlchemy relationships are defined such that you should be able to go from
     any tier in the hierarchy to another other tier by traversing through the intermediary

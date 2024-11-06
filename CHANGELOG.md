@@ -1,5 +1,12 @@
 ***
 
+# Version 1.6.0 - November 2024
+
+- Fix multiple bugs in Guidance extension
+- Fix spacing issues in Darkpool Markdown
+
+***
+
 # Version 1.5.2 - October 2024
 
 - Fix bug with overrides not applying for CSV output

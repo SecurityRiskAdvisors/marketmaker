@@ -60,6 +60,12 @@
                     h3_elements.forEach((h3_element) => {
                         h3_element.classList.add("title");
                         h3_element.classList.add("is-6");
+                        h3_element.classList.add("mt-3");
+                    });
+
+                    var strong_elements = element.querySelectorAll('strong');
+                    strong_elements.forEach((strong_element) => {
+                        strong_element.parentElement.classList.add("mt-3");
                     });
 
                     var pre_elements = element.querySelectorAll('pre');
