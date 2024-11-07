@@ -213,7 +213,10 @@ class GuidanceMapping(SQLModel, table=True):
             .filter(GuidanceMapping.target_id == o.id, GuidanceMapping.target_type == o_type)
             .all()
         )
-        for mapping in mappings:
+        for mapping in mappings:  # type: GuidanceMapping
+            if mapping.scope not in hook.scopes:
+                continue
+
             doc: GuidanceDocument = (
                 session.query(GuidanceDocument)
                 .filter(
@@ -228,6 +231,9 @@ class GuidanceMapping(SQLModel, table=True):
     def populate_linked_data(cls):
         mappings: List[tuple] = session.query(GuidanceMapping).filter(GuidanceMapping.target_type.is_not(None)).all()
         for mapping in mappings:  # type: GuidanceMapping
+            if mapping.scope not in hook.scopes:
+                continue
+
             doc: GuidanceDocument = (
                 session.query(GuidanceDocument)
                 .filter(
