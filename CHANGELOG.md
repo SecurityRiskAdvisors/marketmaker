@@ -1,5 +1,11 @@
 ***
 
+# Version 1.7.1 - November 2024
+
+- Fix bug in Guidance extension for duplicates in linked data
+
+***
+
 # Version 1.7.0 - November 2024
 
 - Added summary CSV download button to Darkpool

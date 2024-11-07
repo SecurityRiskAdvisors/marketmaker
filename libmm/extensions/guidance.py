@@ -1,6 +1,5 @@
 import re
 from enum import Enum, auto
-from typing import List
 import click
 from uuid import uuid4
 from sqlalchemy import Column, String, Enum as SAEnum, event
@@ -26,7 +25,7 @@ from libmm.extension import (
     UserHookSettingT,
 )
 from libmm.log import logger, LoggedException
-from libmm.type import StrOrPath, OutputPrefixes, Optional
+from libmm.type import StrOrPath, OutputPrefixes, Optional, List, Set
 from libmm.utils import (
     load_yaml_from_file,
     resolve_str_or_path,
@@ -207,53 +206,49 @@ class GuidanceMapping(SQLModel, table=True):
             session.commit()
 
     @classmethod
-    def populate_linked_data(cls):
-        # get a list of unique ids per type then populate the linked data table for them
-        # this should prevent duplicate entries when multiple guidance docs are mapped to
-        #   one target
-        mappings: List[tuple] = (
+    def get_documents_for_object(cls, o, o_type: GuidanceTarget) -> Set[str]:
+        documents = set()
+        mappings = (
             session.query(GuidanceMapping)
-            .distinct(GuidanceMapping.target_id, GuidanceMapping.target_type)
-            .filter(GuidanceMapping.target_type.isnot(None))
+            .filter(GuidanceMapping.target_id == o.id, GuidanceMapping.target_type == o_type)
             .all()
         )
-        for mapping in mappings:  # type: GuidanceMapping
-            docs = GuidanceMapping.get_document_contents_for_object(
-                target_type=mapping.target_type, target_id=mapping.target_id
+        for mapping in mappings:
+            doc: GuidanceDocument = (
+                session.query(GuidanceDocument)
+                .filter(
+                    GuidanceDocument.uuid == mapping.guidance_id, GuidanceDocument.anchor == mapping.guidance_anchor
+                )
+                .first()
             )
-            if docs_ldata := fmt_ldata_documents(docs):
+            documents.add(doc.content)
+        return documents
+
+    @classmethod
+    def populate_linked_data(cls):
+        mappings: List[tuple] = session.query(GuidanceMapping).filter(GuidanceMapping.target_type.is_not(None)).all()
+        for mapping in mappings:  # type: GuidanceMapping
+            doc: GuidanceDocument = (
+                session.query(GuidanceDocument)
+                .filter(
+                    GuidanceDocument.uuid == mapping.guidance_id, GuidanceDocument.anchor == mapping.guidance_anchor
+                )
+                .first()
+            )
+
+            if doc:
                 session.add(
                     LinkedData(
                         blueprint_id=mapping.target_id if mapping.target_type == GuidanceTarget.Blueprint else None,
                         variant_id=mapping.target_id if mapping.target_type == GuidanceTarget.Variant else None,
                         target_type=LinkedDataTarget(mapping.target_type.name),
                         data_format=LinkedDataFormat.Markdown,
-                        data=docs_ldata,
+                        data=doc.content,
                         origin=hook.name,
                         display_name="Operator Guidance",
                     )
                 )
                 session.commit()
-
-    @classmethod
-    def get_document_contents_for_object(cls, target_type: GuidanceTarget, target_id) -> [str]:
-        document_bodies = []
-        mappings = session.query(cls).filter(cls.target_id == target_id, cls.target_type == target_type).all()
-        if len(mappings) > 0:
-            document_bodies = []
-            for mapping in mappings:  # type: GuidanceMapping
-                if mapping.scope not in hook.scopes:
-                    continue
-
-                documents: List[GuidanceDocument] = (
-                    session.query(GuidanceDocument)
-                    .filter(
-                        GuidanceDocument.uuid == mapping.guidance_id, GuidanceDocument.anchor == mapping.guidance_anchor
-                    )
-                    .all()
-                )
-                document_bodies.extend([document.content for document in documents])
-        return document_bodies
 
     @classmethod
     def from_mapping_yaml(cls, mapping: dict):
@@ -392,9 +387,9 @@ class GuidanceHook(AbstractUserHook):
         notebook = ""
         blueprint = context.blueprint
 
-        if blueprint_docs := GuidanceMapping.get_document_contents_for_object(
-            target_type=GuidanceTarget.Blueprint, target_id=blueprint.id
-        ):
+        blueprint_docs = GuidanceMapping.get_documents_for_object(blueprint, GuidanceTarget.Blueprint)
+
+        if len(blueprint_docs) > 0:
             notebook += f"# General"
             notebook += MARKDOWN_NEWLINE
             for doc in blueprint_docs:
@@ -405,9 +400,7 @@ class GuidanceHook(AbstractUserHook):
             campaign_docs = set()
 
             for variant in campaign.variants:  # type: Variant
-                for doc in GuidanceMapping.get_document_contents_for_object(
-                    target_type=GuidanceTarget.Variant, target_id=variant.id
-                ):
+                for doc in GuidanceMapping.get_documents_for_object(variant, GuidanceTarget.Variant):
                     # handle when one doc is mapped to multiple variants
                     # this is done a per-campaign basis
                     #   e.g. no dupes in a campaign, but dupes okay across campaigns
@@ -425,15 +418,6 @@ class GuidanceHook(AbstractUserHook):
 
 
 hook = GuidanceHook()
-
-
-def fmt_ldata_documents(documents: List[str]) -> str | None:
-    if len(documents) > 1:
-        return f"{MARKDOWN_NEWLINE}---{MARKDOWN_NEWLINE}".join(documents)
-    elif len(documents) == 1:
-        return documents[0]
-    else:
-        return
 
 
 @event.listens_for(Blueprint, "before_insert")
