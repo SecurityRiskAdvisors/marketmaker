@@ -183,7 +183,7 @@ class Variant(SQLModel, table=True):
 
         # dictionary fields are decided based on an inclusion criteria rather than exclusion
         # NOTE: when adding new attributes to the Variant class, make sure to update this list
-        top_level_includes = ["description", "platforms", "guidance", "block", "detect", "controls"]
+        top_level_includes = ["description", "platforms", "prerequisites", "guidance", "block", "detect", "controls"]
         for include in top_level_includes:
             if include in original_dict:
                 final_dict[include] = original_dict[include]

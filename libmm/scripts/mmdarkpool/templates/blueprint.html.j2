@@ -128,18 +128,18 @@
                         </div>
                         <div class="message-body">
                             <div class="columns">
-                                {% set campaign_len = blueprint.child_campaigns | list | length | int %}
+                                {% set campaign_len = campaigns | length | int %}
                                 {% set campaign_left = (campaign_len/2)|int + (campaign_len % 2) %}
                                 <div class="column is-half">
                                     <aside class="menu">
-                                    {% for campaign in blueprint.child_campaigns[:campaign_left] %}
+                                    {% for campaign in campaigns[:campaign_left] %}
                                         <details>
-                                            <summary>{{ campaign.name }}</summary>
+                                            <summary>{{ campaign[0] }}</summary>
                                             <ul class="menu-list">
                                                 <li>
                                                     <ul>
-                                                    {% for variant in campaign.variants %}
-                                                        <li><a href="/bundles/{{ blueprint.id }}/{{ variant.id }}.html">{{ variant.display_name }}</a></li>
+                                                    {% for variant in campaign[1] %}
+                                                        <li><a href="/bundles/{{ blueprint.id }}/{{ variant["metadata"]["id"] }}.html">{{ variant["name"] }}</a></li>
                                                     {% endfor %}
                                                     </ul>
                                                 </li>
@@ -150,14 +150,14 @@
                                 </div>
                                 <div class="column is-half">
                                     <aside class="menu">
-                                    {% for campaign in blueprint.child_campaigns[campaign_left:] %}
+                                    {% for campaign in campaigns[campaign_left:] %}
                                         <details>
-                                            <summary>{{ campaign.name }}</summary>
+                                            <summary>{{ campaign[0] }}</summary>
                                             <ul class="menu-list">
                                                 <li>
                                                     <ul>
-                                                    {% for variant in campaign.variants %}
-                                                        <li><a href="/bundles/{{ blueprint.id }}/{{ variant.id }}.html">{{ variant.display_name }}</a></li>
+                                                    {% for variant in campaign[1] %}
+                                                        <li><a href="/bundles/{{ blueprint.id }}/{{ variant["metadata"]["id"]}}.html">{{ variant["name"] }}</a></li>
                                                     {% endfor %}
                                                     </ul>
                                                 </li>

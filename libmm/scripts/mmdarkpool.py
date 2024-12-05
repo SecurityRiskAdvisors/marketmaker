@@ -149,7 +149,10 @@ def render_variant_listing(variants: List[Variant]):
     vars:
     - all_variants
     """
-    return jinja_env.get_template(Templates.Variants).render(all_variants=variants)
+    grouped = {}
+    for variant in variants:
+        grouped.setdefault(variant.tid, []).append(variant.render())
+    return jinja_env.get_template(Templates.Variants).render(grouped_variants=grouped)
 
 
 def render_blueprint_listing(latest_blueprints: List[LatestBlueprintPair], all_blueprints: List[Blueprint]):
@@ -180,8 +183,19 @@ def render_blueprint(
     ):  # type: LinkedData
         data = format_linked_data(row)
         linked_data.setdefault(row.display_name, []).append(data)
+
+    campaigns = []  # list of campaign name, variant pairs
+    for campaign in blueprint.child_campaigns:
+        variants = [variant.render(apply_overrides=True, blueprint_id=blueprint.id) for variant in campaign.variants]
+        pair = campaign.name, variants
+        campaigns.append(pair)
+
     return jinja_env.get_template(Templates.Blueprint).render(
-        latest_blueprints=latest_blueprints, all_blueprints=all_blueprints, blueprint=blueprint, linked_data=linked_data
+        latest_blueprints=latest_blueprints,
+        all_blueprints=all_blueprints,
+        blueprint=blueprint,
+        linked_data=linked_data,
+        campaigns=campaigns,
     )
 
 
@@ -202,6 +216,11 @@ def render_variant(variant: Variant, **kwargs):
         data = format_linked_data(row)
         linked_data.setdefault(row.display_name, []).append(data)
 
+    # do all this before rendering
+    related_variants = session.query(Variant).filter(Variant.tid == variant.tid).all()
+    related_variants = [variant.render() for variant in related_variants]
+    mitre_description = lookup_technique_by_tid(variant.tid)[0].description
+
     # cleanup guidance
     final_guidance = ""
     if variant.guidance:
@@ -213,15 +232,29 @@ def render_variant(variant: Variant, **kwargs):
                 final_guidance += guidance
                 final_guidance += "\n"
 
+    campaigns_grouped = {}
+    if "blueprint" in kwargs:
+        # if a blueprint is provided, we need to apply overrides from that blueprint
+        # to the variant on the blueprint's variant page
+        blueprint: Blueprint = kwargs.get("blueprint")
+        variant = variant.render(apply_overrides=True, blueprint_id=blueprint.id)
+        for campaign in blueprint.child_campaigns:
+            campaigns_grouped[campaign.name] = [
+                v.render(apply_overrides=True, blueprint_id=blueprint.id) for v in campaign.variants
+            ]
+    else:
+        variant = variant.render()
+
     # left-side menu is default all other variants in library that share a TID/
     #   if blueprint is provided, the left-side menu is all variants in that blueprint
     #   grouped by the campaign name
     return jinja_env.get_template(Templates.Variant).render(
         variant=variant,
-        related_variants=session.query(Variant).filter(Variant.tid == variant.tid).all(),
+        related_variants=related_variants,
         linked_data=linked_data,
         guidance=final_guidance,
-        mitre_description=lookup_technique_by_tid(variant.tid)[0].description,
+        mitre_description=mitre_description,
+        campaigns_grouped=campaigns_grouped,
         **kwargs,
     )
 

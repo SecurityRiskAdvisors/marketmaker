@@ -1,5 +1,12 @@
 ***
 
+# Version 1.8.0 - December 2024
+
+- Added support for Blueprint overrides to Darkpool
+- Fixed prerequisites list in Darkpool
+
+***
+
 # Version 1.7.2 - November 2024
 
 - Added back scoping check

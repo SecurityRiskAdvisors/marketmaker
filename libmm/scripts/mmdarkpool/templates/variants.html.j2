@@ -4,7 +4,7 @@
     <div class="container">
         <div class="columns">
             <div class="column is-three-quarters mx-auto">
-                {% for tid, variants in all_variants | groupby('tid') %}
+                {% for tid, variants in grouped_variants.items() %}
                 <section class="section">
                     <div class="notification is-danger">
                         <div class="columns">
@@ -28,7 +28,7 @@
                                 <li>
                                     <ul>
                                     {% for variant in variants %}
-                                        <li><a href="/testcases/{{ variant.id }}.html">{{ variant.display_name }}</a></li>
+                                        <li><a href="/testcases/{{ variant["metadata"]["id"] }}.html">{{ variant["name"] }}</a></li>
                                     {% endfor %}
                                     </ul>
                                 </li>

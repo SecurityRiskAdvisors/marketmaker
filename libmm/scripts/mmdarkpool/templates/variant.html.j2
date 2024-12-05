@@ -10,14 +10,14 @@
                         <p class="menu-label">
                             {{ blueprint.name }}
                         </p>
-                        {% for campaign in blueprint.child_campaigns %}
+                        {% for campaign, variants in campaigns_grouped.items() %}
                             <details open>
-                                <summary>{{ campaign.name }}</summary>
+                                <summary>{{ campaign }}</summary>
                                 <ul class="menu-list">
                                     <li>
                                         <ul>
-                                        {% for variant in campaign.variants %}
-                                          <li><a href="/bundles/{{ blueprint.id }}/{{ variant.id }}.html">{{ variant.display_name }}</a></li>
+                                        {% for variant in variants %}
+                                          <li><a href="/bundles/{{ blueprint.id }}/{{ variant["metadata"]["id"] }}.html">{{ variant["name"] }}</a></li>
                                         {% endfor %}
                                         </ul>
                                     </li>
@@ -28,11 +28,11 @@
                     {% elif related_variants %}
                     <aside class="menu">
                         <p class="menu-label">
-                            [{{ variant.tid }}] {{ variant.tid | tid2name }}
+                            [{{ variant["metadata"]["tid"] }}] {{ variant["metadata"]["tid"] | tid2name }}
                         </p>
                         <ul class="menu-list">
                             {% for related_variant in related_variants %}
-                            <li><a href="/testcases/{{ related_variant.id }}.html">{{ related_variant.display_name }}</a></li>
+                            <li><a href="/testcases/{{ related_variant["metadata"]["id"] }}.html">{{ related_variant["name"] }}</a></li>
                             {% endfor %}
                         </ul>
                     </aside>
@@ -42,7 +42,7 @@
                 <div class="column is-9">
                     <div class="notification is-danger">
                         <p class="title">
-                            {{ variant.display_name }}
+                            {{ variant["name"] }}
                         </p>
                     </div>
                     <section>
@@ -55,17 +55,17 @@
                                 <div class="level-right">
                                         <p>
                                             <span class="tag is-light">
-                                                <a style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://attack.mitre.org/techniques/{{ variant.tid | replace('.', '/') }}/">{{ variant.tid }}</a>
+                                                <a style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="https://attack.mitre.org/techniques/{{ variant["metadata"]["tid"] | replace('.', '/') }}/">{{ variant["metadata"]["tid"] }}</a>
                                             </span>
-                                            <span class="tag is-light">{{ variant.id }}</span>
+                                            <span class="tag is-light">{{ variant["metadata"]["id"] }}</span>
                                         </p>
                                 </div>
                             </div>
                             <div class="message-body">
-                                <div class="block">{{ variant.description }}</div>
+                                <div class="block">{{ variant["description"] }}</div>
                                 <div class="block">
                                     <details>
-                                        <summary><u>MITRE ATT&CK description for [{{ variant.tid | tid2name }}]</u></summary>
+                                        <summary><u>MITRE ATT&CK description for [{{ variant["metadata"]["tid"] | tid2name }}]</u></summary>
                                         <div id='markdown'>{{ mitre_description }}</div>
                                     </details>
                                 </div>
@@ -80,8 +80,8 @@
                                             Prerequisites
                                     </div>
                                     <div class="message-body has-text-centered">
-                                        {% if variant.prerequisites %}
-                                        {% for prerequisite in variant.prerequisites %}
+                                        {% if variant["prerequisites"] %}
+                                        {% for prerequisite in variant["prerequisites"] %}
                                         <span class="tag is-link">{{ prerequisite }}</span>
                                         {% endfor %}
                                         {% endif %}
@@ -94,8 +94,8 @@
                                             Platforms
                                     </div>
                                     <div class="message-body has-text-centered">
-                                        {% if variant.platforms %}
-                                        {% for platform in variant.platforms %}
+                                        {% if variant["platforms"] %}
+                                        {% for platform in variant["platforms"] %}
                                         <span class="tag is-link">{{ platform }}</span>
                                         {% endfor %}
                                         {% endif %}
@@ -104,7 +104,7 @@
                             </div>
                         </div>
 
-                        {% if variant.guidance %}
+                        {% if variant["guidance"] %}
                         {%- set _ = toc.append("Commands") %}
                         <article class="message is-dark" id="commands">
                             <div class="message-header">
@@ -127,8 +127,8 @@
                                     </div>
                                     <div class="level-right">
                                             <p>
-                                                {% if variant.controls %}
-                                                {% for control in variant.controls %}
+                                                {% if variant["controls"] %}
+                                                {% for control in variant["controls"] %}
                                                 <span class="tag is-light">{{ control }}</span>
                                                 {% endfor %}
                                                 {% endif %}
@@ -141,8 +141,8 @@
                                             <h4 class="title is-5">Detect</h4>
                                             <div class="content">
                                                 <ul>
-                                                    {% if variant.detect %}
-                                                    {% for detect in variant.detect %}
+                                                    {% if variant["detect"] %}
+                                                    {% for detect in variant["detect"] %}
                                                     <li>{{ detect }}</li>
                                                     {% endfor %}
                                                     {% endif %}
@@ -153,8 +153,8 @@
                                             <h4 class="title is-5">Block</h4>
                                             <div class="content">
                                                 <ul>
-                                                    {% if variant.block %}
-                                                    {% for block in variant.block %}
+                                                    {% if variant["block"] %}
+                                                    {% for block in variant["block"] %}
                                                     <li>{{ block }}</li>
                                                     {% endfor %}
                                                     {% endif %}
