@@ -1,5 +1,11 @@
 ***
 
+# Version 1.8.1 - December 2024
+
+- Added support for overriding multiple version of the same Variant via the Blueprint
+
+***
+
 # Version 1.8.0 - December 2024
 
 - Added support for Blueprint overrides to Darkpool

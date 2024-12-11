@@ -377,53 +377,65 @@ class Blueprint(SQLModel, table=True):
                         #   - integer -> ex: 1
                         #   - string  -> ex: 1;2
                         #   - dict    -> ex: { ... }
+                        #   - list    -> ex: [ ... ]
                         #
                         # the string form allows for multiple version of the same variant
                         # this has to be done like this to avoid duplicate keys in YAML
                         #
                         # the dict form is a blueprint-level override that lets the
                         # blueprint override certain fields in a variant
+                        #
+                        # the list form allows for overriding multiple versions of the same variant
 
-                        do_override = False
-                        if type(variant_block) in [str, int]:
-                            versions = str(variant_block)
-                            if ";" in versions:
-                                versions = [version.strip() for version in versions.split(";")]
-                            else:
-                                versions = [versions]
+                        if isinstance(variant_block, list):
+                            variant_list = variant_block
                         else:
-                            do_override = True
-                            versions = [variant_block.get("version")]
+                            variant_list = [variant_block]
 
-                        for version in versions:
-                            try:
-                                variant = lookup_variant(tid=tid, name=variant_name, version=version)
-                            except Exception as e:
-                                logger.error(e)
-                                continue
+                        for variant_list_item in variant_list:
+                            do_override = False
+                            if isinstance(variant_list_item, (str, int)):
+                                version_str = str(variant_list_item)
+                            else:
+                                do_override = True
+                                version_str = str(variant_list_item.get("version"))
 
-                            session.add(variant)
-                            session.add(campaign)
-                            campaign.variants.append(variant)
+                            if ";" in version_str:
+                                versions = [version.strip() for version in version_str.split(";")]
+                            else:
+                                versions = [version_str]
 
-                            if do_override:
-                                override = VariantOverride(
-                                    referencces=variant_block.get("references", None),
-                                    guidance=variant_block.get("guidance", None),
-                                    display_name=variant_block.get("name", None),
-                                    variant=variant,
-                                    blueprint_id=blueprint.id,
-                                    campaign_id=campaign.id,
+                            for version in versions:
+                                try:
+                                    variant = lookup_variant(tid=tid, name=variant_name, version=version)
+                                except Exception as e:
+                                    logger.error(e)
+                                    continue
+
+                                session.add(variant)
+                                session.add(campaign)
+                                campaign.variants.append(variant)
+
+                                if do_override:
+                                    new_name = variant_list_item.get("name", None)
+
+                                    override = VariantOverride(
+                                        referencces=variant_list_item.get("references", None),
+                                        guidance=variant_list_item.get("guidance", None),
+                                        display_name=new_name if new_name else variant.display_name,
+                                        variant=variant,
+                                        blueprint_id=blueprint.id,
+                                        campaign_id=campaign.id,
+                                    )
+                                    session.add(override)
+
+                                # handle blueprint-level groups based on matching tid+blueprint
+                                group_matches = (
+                                    session.query(BlueprintGroup)
+                                    .filter(BlueprintGroup.tid == tid, BlueprintGroup.blueprint_id == blueprint.id)
+                                    .all()
                                 )
-                                session.add(override)
-
-                            # handle blueprint-level groups based on matching tid+blueprint
-                            group_matches = (
-                                session.query(BlueprintGroup)
-                                .filter(BlueprintGroup.tid == tid, BlueprintGroup.blueprint_id == blueprint.id)
-                                .all()
-                            )
-                            variant.groups.extend(group_matches)
+                                variant.groups.extend(group_matches)
 
         session.commit()
         blueprint.emit_loaded()

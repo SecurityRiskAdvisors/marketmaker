@@ -84,6 +84,20 @@ campaigns:
 
 In most cases, users should stick with the first form.
 
+You can also specify these Variant structures as a list. 
+This is intended to support instances where you need to include multiple version of the same Variant and override one or both versions. Example:
+
+```
+campaigns:
+  Command and Control:
+    T1071.004:
+      dnsc2:
+      - version: 1
+        name: "Override version 1"
+      - version: 2
+        name: "Override version 2"
+```
+
 ### Groups
 
 Groups are used to add additional threat group metadata to exported test cases and follow the structure:
