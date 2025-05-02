@@ -1,5 +1,11 @@
 ***
 
+# Version 1.9.0 - April 2025
+
+- Added extension to modify revoked Technique IDs in Variants (`libmm/extensions/attackmigrate.py`)
+
+***
+
 # Version 1.8.1 - December 2024
 
 - Added support for overriding multiple version of the same Variant via the Blueprint
