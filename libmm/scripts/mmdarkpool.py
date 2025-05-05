@@ -152,7 +152,8 @@ def render_variant_listing(variants: List[Variant]):
     grouped = {}
     for variant in variants:
         grouped.setdefault(variant.tid, []).append(variant.render())
-    return jinja_env.get_template(Templates.Variants).render(grouped_variants=grouped)
+    sorted_grouped = {k: grouped[k] for k in sorted(grouped.keys())}
+    return jinja_env.get_template(Templates.Variants).render(grouped_variants=sorted_grouped)
 
 
 def render_blueprint_listing(latest_blueprints: List[LatestBlueprintPair], all_blueprints: List[Blueprint]):

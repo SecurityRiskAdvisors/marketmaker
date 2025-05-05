@@ -1,4 +1,5 @@
 {% extends "base.html.j2" %}
+{% block pagetitle %}{{ variant["name"] }}{% endblock %}
 {% block content %}
 {% set toc = [] %}
     <section class="section">
@@ -98,6 +99,42 @@
                                         {% for platform in variant["platforms"] %}
                                         <span class="tag is-link">{{ platform }}</span>
                                         {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+
+                        <div class="columns">
+                            <div class="column is-half">
+                                {%- set _ = toc.append("Links") %}
+                                <article class="message is-dark" id="links">
+                                    <div class="message-header">
+                                            References
+                                    </div>
+                                    <div class="message-body content">
+                                        {% if variant["metadata"]["x_references"] %}
+                                        <ul>
+                                            {% for reference in variant["metadata"]["x_references"] %}
+                                            <li>{{ reference }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            </div>
+                            <div class="column is-half">
+                                <article class="message is-dark">
+                                    <div class="message-header">
+                                            Tools
+                                    </div>
+                                    <div class="message-body content">
+                                        {% if variant["metadata"]["x_tools"] %}
+                                        <ul>
+                                            {% for tool in variant["metadata"]["x_tools"] %}
+                                            <li>{{ tool }}</li>
+                                            {% endfor %}
+                                        </ul>
                                         {% endif %}
                                     </div>
                                 </article>
