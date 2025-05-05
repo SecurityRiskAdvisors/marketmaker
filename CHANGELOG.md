@@ -1,5 +1,15 @@
 ***
 
+# Version 1.10.0 - April 2025
+
+- Updates to Darkpool viewer:
+  - include Variant tools/references on Variant pages
+  - sort Variant list by MITRE TID
+  - HTML titles mirror the page titles
+- MITRE data refresh
+
+***
+
 # Version 1.9.0 - April 2025
 
 - Added extension to modify revoked Technique IDs in Variants (`libmm/extensions/attackmigrate.py`)
