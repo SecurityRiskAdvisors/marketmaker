@@ -1,10 +1,82 @@
 {% extends "base.html.j2" %}
 {% block pagetitle %}Test Cases{% endblock %}
+{% block headlinks %}
+<!-- minisearch -->
+<script src="https://cdn.jsdelivr.net/npm/minisearch@7.1.2/dist/umd/index.js"
+        integrity="sha256-lQhAzYFvaWw6G93pdw1xBGyhYnJAm3uNDnUBOqppSAA="
+        crossorigin="anonymous" referrerpolicy="no-referrer" ></script>
+
+<script>
+// search based on: https://www.shezi.de/posts/2025-01-10-static-full-text-search.html
+
+function render_search(result, search_phrase) {
+    let rendered = "";
+    for (const item of result) {
+        rendered += `<li><a href="${item.url}" target="_blank">${item.name}</a></li>`
+    }
+
+    const searchresult = document.getElementById("searchresult");
+    searchresult.innerHTML = rendered;
+};
+
+const minisearch = new MiniSearch({
+    fields: ['name', 'description', 'guidance_flat'],
+    storeFields: ['name', 'url'],
+    searchOptions: {
+        combineWith: "AND",
+    },
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/search-index.json')
+    .then((response) => response.json())
+    .then(data => {
+        minisearch.addAll(data);
+
+        function search() {
+            const results = minisearch.search(searchfield.value);
+            render_search(results, searchfield.value);
+        };
+
+        const searchfield = document.getElementById("searchfield");
+        let timer;
+        searchfield.oninput = function () {
+            clearTimeout(timer);
+            if (!searchfield.value) {
+                return;
+            }
+            timer = setTimeout(search, 0);
+        };
+    });
+});
+</script>
+{% endblock headlinks %}
 {% block content %}
 <section class="section">
     <div class="container">
         <div class="columns">
             <div class="column is-three-quarters mx-auto">
+                <section class="section">
+                    <div class="notification is-danger">
+                        <p class="title is-5">Search across names, descriptions, and commands</p>
+                    </div>
+
+                    <input id="searchfield" class="input" type="text" placeholder="Search test cases">
+                    <div id="results" class="pt-4">
+                        <aside class="menu">
+                            <details open>
+                                <summary>Test Cases</summary>
+                                <ul class="menu-list">
+                                    <li>
+                                        <ul id="searchresult" class="menu-list">
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </details>
+                        </aside>
+                    </div>
+                </section>
+
                 {% for tid, variants in grouped_variants.items() %}
                 <section class="section">
                     <div class="notification is-danger">
@@ -29,7 +101,7 @@
                                 <li>
                                     <ul>
                                     {% for variant in variants %}
-                                        <li><a href="/testcases/{{ variant["metadata"]["id"] }}.html">{{ variant["name"] }}</a></li>
+                                        <li><a href="/testcases/{{ variant["metadata"]["id"] }}.html" target="_blank">{{ variant["name"] }}</a></li>
                                     {% endfor %}
                                     </ul>
                                 </li>
