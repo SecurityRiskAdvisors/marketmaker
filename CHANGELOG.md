@@ -1,5 +1,16 @@
 ***
 
+# Version 1.11.0 - June 2025
+
+- Updates to Darkpool viewer:
+  - Added a text search to the test case listing page for searching through test case names, descriptions, and commands
+  - Added a new endpoint `/search-index.json` that includes all Variants in their rendered form for use by the search function
+- Switched from CommonMark to [Marked](https://github.com/markedjs/marked) for Markdown rendering. This should allow for use of GitHub-flavored Markdown in [guidance documents](docs/extensions/Guidance.md).
+- Bug fix for Guidance extension when splitting then rejoining source documents
+- MITRE data refresh
+
+***
+
 # Version 1.10.0 - April 2025
 
 - Updates to Darkpool viewer:

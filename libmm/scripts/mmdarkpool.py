@@ -112,6 +112,7 @@ class SitePaths:
     Variants = "testcases.html"
     Index = "index.html"
     NavigatorIndex = StaticDirectories.NavigatorUI + "/index.html"
+    VariantSearchIndex = "search-index.json"
 
     Variant = StaticDirectories.Variants + "/{variant_id}.html"
     Blueprint = StaticDirectories.Blueprints + "/{blueprint_id}.html"
@@ -272,6 +273,32 @@ def render_blueprint_variant(blueprint: Blueprint, **kwargs):
     return render_variant(blueprint=blueprint, **kwargs)
 
 
+def generate_search_index(variants: List[Variant]) -> List[dict]:
+    """
+    Generates a JSON document of all Variants for use as a search index on the listing page.
+    The content is the same as a rendered Variant, save for the following differences:
+    - top-level key "guidance_flat", which is a tab-joined string of the "guidance" key
+    - top-level key "id", which is the same as the ID in the metadata
+    - top-level key "url", which is the relative URL of the Variant page
+    """
+    index = []
+    for variant in variants:
+        rendered = variant.render()
+
+        if guidance := rendered.get("guidance"):
+            rendered["guidance_flat"] = "\t".join(guidance)
+        else:
+            rendered["guidance_flat"] = ""
+
+        variant_id = rendered.get("metadata").get("id")
+        rendered["url"] = "/" + SitePaths.Variant.format(variant_id=variant_id)
+        rendered["id"] = variant_id
+
+        index.append(rendered)
+
+    return index
+
+
 @click.group()
 @click.version_option(message="version: %(version)s")
 def main():
@@ -413,6 +440,11 @@ def html(techniques, blueprint_paths, latest_json, output_directory, nav_directo
         .replace("//", "/")  # fixes double '/' in <base> href
     )
     nav_index.write_text(nav_index_body)
+
+    # write search page and index
+    # index currently searches using AND, not OR
+    searchindex = generate_search_index(variants)
+    dump_json_to_file(searchindex, output_directory.joinpath(SitePaths.VariantSearchIndex))
 
 
 main.add_command(html)
