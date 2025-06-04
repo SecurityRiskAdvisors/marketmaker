@@ -95,7 +95,7 @@ Darkpool uses the following third-party UI projects client-side:
 
 - [Bulma](https://bulma.io/) for CSS
 - [Font Awesome](https://fontawesome.com/) for icons
-- [marked](https://github.com/markedjs/marked) for Markdown rendering
+- [Marked](https://github.com/markedjs/marked) for Markdown rendering
 - [Highlight.js](https://highlightjs.org/) for syntax highlighting
 - [MiniSearch](https://github.com/lucaong/minisearch) for text search
 
