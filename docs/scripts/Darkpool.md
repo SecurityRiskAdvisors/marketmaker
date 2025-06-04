@@ -95,8 +95,9 @@ Darkpool uses the following third-party UI projects client-side:
 
 - [Bulma](https://bulma.io/) for CSS
 - [Font Awesome](https://fontawesome.com/) for icons
-- [CommonMark](https://github.com/commonmark/commonmark.js) for Markdown rendering
+- [marked](https://github.com/markedjs/marked) for Markdown rendering
 - [Highlight.js](https://highlightjs.org/) for syntax highlighting
+- [MiniSearch](https://github.com/lucaong/minisearch) for text search
 
 All projects are loaded from public CDNs and use SRI for integrity checking.
 
