@@ -116,7 +116,7 @@ class GuidanceDocument(SQLModel, table=True):
         md_split = markdown.split("---")
         front_matter = {}
         if len(md_split) > 1:
-            markdown = "".join(md_split[2:])
+            markdown = "---".join(md_split[2:])
             front_matter = get_yaml_o().load(md_split[1])
         try:
             guidance_id = front_matter["x_guidance_id"]
