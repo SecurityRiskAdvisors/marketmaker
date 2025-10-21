@@ -1,5 +1,11 @@
 ***
 
+# Version 1.12.0 - October 2025
+
+- Adds Arbitrageur script and extension for generating execution automation Jupyter notebooks for use with Mythic C2's Apollo agent.
+
+***
+
 # Version 1.11.0 - June 2025
 
 - Updates to Darkpool viewer:

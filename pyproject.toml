@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "marketmaker"
-version = "1.11.0"
+version = "1.12.0"
 description = "Suite of tools for managing and creating attack plans"
 authors = ["2XXE <root@example.com>"]
 readme = "README.md"
@@ -31,3 +31,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 mm-cli = "libmm.scripts.mmcli:main"
 mm-darkpool = "libmm.scripts.mmdarkpool:main"
+mm-arbitrageur = "libmm.scripts.mmarbitrageur:main"
