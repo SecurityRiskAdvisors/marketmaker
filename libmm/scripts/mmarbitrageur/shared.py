@@ -247,11 +247,10 @@ def run_basic_task(executor, args: str | dict, variant_id: str, check_admin: boo
     output = format_task_output(task_output)
     print(output)
 
-
     # TODO: most of this attire code is fine, but the ids are not correct
     #       waiting for planned changes to attire data import in vectr
     #       before fixing. if you need attire support working, you will
-    #       need to get the user-mode test case IDs from the assessment 
+    #       need to get the user-mode test case IDs from the assessment
     #       so the logs import properly
     if attire:
         step = {

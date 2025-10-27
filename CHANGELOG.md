@@ -1,5 +1,11 @@
 ***
 
+# Version 1.12.1 - October 2025
+
+- Add missing dependency for Arbitrageur script
+
+***
+
 # Version 1.12.0 - October 2025
 
 - Adds Arbitrageur script and extension for generating execution automation Jupyter notebooks for use with Mythic C2's Apollo agent.
