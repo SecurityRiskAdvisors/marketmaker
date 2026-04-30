@@ -221,7 +221,10 @@ def render_variant(variant: Variant, **kwargs):
     # do all this before rendering
     related_variants = session.query(Variant).filter(Variant.tid == variant.tid).all()
     related_variants = [variant.render() for variant in related_variants]
-    mitre_description = lookup_technique_by_tid(variant.tid)[0].description
+    mitre_techniques = lookup_technique_by_tid(variant.tid)
+    mitre_description = ""
+    if len(mitre_techniques) > 0:
+        mitre_description = mitre_techniques[0].description
 
     # cleanup guidance
     final_guidance = ""

@@ -44,6 +44,20 @@ Guidance documents are structured Markdown documents (see "GuidanceDocument" cla
 MARKDOWN_NEWLINE = "\n\n"
 
 
+class GuidanceSettings(Enum):
+    Paths = auto()
+    OpNotebook = auto()
+    Mapping = auto()
+    Scopes = auto()
+    DisplayFormat = auto()
+
+
+class GuidanceDisplayFormat(str, Enum):
+    Markdown = "markdown"
+    # Html = "html"
+    CollapsedHtml = "chtml"
+
+
 class GuidanceDocument(SQLModel, table=True):
     """
     markdown structure
@@ -91,9 +105,22 @@ class GuidanceDocument(SQLModel, table=True):
 
     id: int = Field(primary_key=True)
     uuid: str = Field(default_factory=lambda: str(uuid4()), sa_column=Column(String, unique=False))  # guid
-    content: str  # entire guide contents
+    body: str  # guide contents (H3s only)
     gsv: int  # schema version
     anchor: int  # subguide version from original document
+    title: str  # merged title
+    description: str  # merged description
+
+    @property
+    def content(self):
+        merged = ""
+        merged += self.title
+        merged += MARKDOWN_NEWLINE
+        merged += self.description
+        merged += MARKDOWN_NEWLINE
+        merged += self.body
+        merged = condense_spaces(merged)
+        return merged
 
     @classmethod
     def load_all_from_paths(cls, paths: List[StrOrPath]):
@@ -107,7 +134,7 @@ class GuidanceDocument(SQLModel, table=True):
         if path.exists():
             return cls.from_markdown(path.read_text())
         else:
-            logger.warn(f'Guidance file "{path.as_posix()}" does not exist')
+            logger.warning(f'Guidance file "{path.as_posix()}" does not exist')
 
     @classmethod
     def from_markdown(cls, markdown: str) -> List["GuidanceDocument"]:
@@ -150,20 +177,16 @@ class GuidanceDocument(SQLModel, table=True):
             merged_title = f"{title_h1} - {subguide_title}"
             merged_description = f"{description_h1.strip()}{MARKDOWN_NEWLINE}{description_h3.strip()}"
 
-            subguide_text = ""
-            subguide_text += merged_title
-            subguide_text += MARKDOWN_NEWLINE
-            subguide_text += merged_description
-            subguide_text += MARKDOWN_NEWLINE
-            subguide_text += "".join([f"### {h3}" for h3 in sections_h3])
-            subguide_text = condense_spaces(subguide_text)
+            merged_h3s = "".join([f"### {h3}" for h3 in sections_h3])
 
             guides.append(
                 cls(
                     uuid=guidance_id,
                     anchor=int(subguide_anchor),
                     gsv=gsv,
-                    content=subguide_text,
+                    body=merged_h3s,
+                    title=merged_title,
+                    description=merged_description,
                 )
             )
 
@@ -201,7 +224,7 @@ class GuidanceMapping(SQLModel, table=True):
                 elif mapping.target_id in variant_ids:
                     mapping.target_type = GuidanceTarget.Variant
                 else:
-                    logger.warn(f'Could not locate target with ID "{mapping.target_id}"')
+                    logger.warning(f'Could not locate target with ID "{mapping.target_id}"')
                     continue
             session.commit()
 
@@ -228,7 +251,7 @@ class GuidanceMapping(SQLModel, table=True):
         return documents
 
     @classmethod
-    def populate_linked_data(cls):
+    def populate_linked_data(cls, guidance_format: GuidanceDisplayFormat = GuidanceDisplayFormat.Markdown):
         mappings: List[tuple] = session.query(GuidanceMapping).filter(GuidanceMapping.target_type.is_not(None)).all()
         for mapping in mappings:  # type: GuidanceMapping
             if mapping.scope not in hook.scopes:
@@ -243,13 +266,30 @@ class GuidanceMapping(SQLModel, table=True):
             )
 
             if doc:
+                if guidance_format == GuidanceDisplayFormat.CollapsedHtml:
+                    doc_title = doc.title.replace("## ", "")
+                    if doc.description is not None and doc.description != "":
+                        doc_description = doc.description.replace("\n", "<br>")
+                        # TODO: right now this formatting is very specific to Darkpool
+                        #       which is not ideal. revisit
+                        title_and_description = (
+                            f"""<h4 class="title is-6">{doc_title}</h4><div class="block">{doc.description}</div>"""
+                        )
+                    else:
+                        title_and_description = f"""<h4 class="title is-6">{doc_title}</h4>"""
+                    content = f"""{title_and_description}<details><summary><u>Expand for guidance</u></summary><div id='markdown'>{doc.body}</div></details>"""
+                    ld_format = LinkedDataFormat.Unformatted
+                else:
+                    content = doc.content
+                    ld_format = LinkedDataFormat.Markdown
+
                 session.add(
                     LinkedData(
                         blueprint_id=mapping.target_id if mapping.target_type == GuidanceTarget.Blueprint else None,
                         variant_id=mapping.target_id if mapping.target_type == GuidanceTarget.Variant else None,
                         target_type=LinkedDataTarget(mapping.target_type.name),
-                        data_format=LinkedDataFormat.Markdown,
-                        data=doc.content,
+                        data_format=ld_format,
+                        data=content,
                         origin=hook.name,
                         display_name="Operator Guidance",
                     )
@@ -271,7 +311,7 @@ class GuidanceMapping(SQLModel, table=True):
                 guidance_entry = properties.get("entry", None)
                 scope = properties.get("scope", "default")
                 if not guidance_id or not guidance_entry:
-                    logger.warn(f'Invalid mapping format for entry ID "{uuid}"')
+                    logger.warning(f'Invalid mapping format for entry ID "{uuid}"')
                     continue
                 session.add(cls(guidance_id=guidance_id, guidance_anchor=guidance_entry, target_id=uuid, scope=scope))
         session.commit()
@@ -279,13 +319,6 @@ class GuidanceMapping(SQLModel, table=True):
     @classmethod
     def from_mapping_file(cls, path: StrOrPath):
         return cls.from_mapping_yaml(load_yaml_from_file(path))
-
-
-class GuidanceSettings(Enum):
-    Paths = auto()
-    OpNotebook = auto()
-    Mapping = auto()
-    Scopes = auto()
 
 
 class GuidanceHook(AbstractUserHook):
@@ -296,6 +329,7 @@ class GuidanceHook(AbstractUserHook):
             GuidanceSettings.Mapping: NoCliHookSetting(name="mapping", parent=self),
             GuidanceSettings.OpNotebook: UserHookSetting(name="opnotebook", parent=self),
             GuidanceSettings.Scopes: UserHookSetting(name="scopes", parent=self),
+            GuidanceSettings.DisplayFormat: NoCliHookSetting(name="displayformat", parent=self),
         }
 
         self._mapping = None
@@ -329,6 +363,13 @@ class GuidanceHook(AbstractUserHook):
             scopes = ["default"]
 
         return scopes
+
+    @property
+    def display_format(self):
+        display_format = GuidanceDisplayFormat.Markdown
+        if (value := self.get_value(GuidanceSettings.DisplayFormat)) not in ["", None]:
+            display_format = GuidanceDisplayFormat(value)
+        return display_format
 
     def do_first_load(self):
         """
@@ -371,7 +412,7 @@ class GuidanceHook(AbstractUserHook):
     def do_start(self, required_settings: List[UserHookSettingT]):
         if not all([setting.value not in [None, ""] for setting in required_settings]):
             self.enabled = False
-            logger.warn(f'Extension "{self.name}" disabled due to missing values')
+            logger.warning(f'Extension "{self.name}" disabled due to missing values')
         else:
             self.enabled = True
             self.do_first_load()
@@ -384,7 +425,8 @@ class GuidanceHook(AbstractUserHook):
     def do_ld_load(self):
         GuidanceMapping.update_target_ids()
         if not self._link_populated:
-            GuidanceMapping.populate_linked_data()
+            logger.info(f'Using "{self.display_format.value}" for Guidance linked data format')
+            GuidanceMapping.populate_linked_data(guidance_format=self.display_format)
             self._link_populated = True
 
     def do_bp_load(self, context: BlueprintLoadedContext):

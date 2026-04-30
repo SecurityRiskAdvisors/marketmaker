@@ -190,6 +190,10 @@ Run #3:
 - Scope: internal, default
 - Result: Notebook contains all three items
 
+## Linked data formatting
+
+Guidance documents exposed via linked data can be formatted as either Markdown or collapsed HTML. Markdown should be used in most cases. Collapsed HTML is useful when using Darkpool. Markdown formatting uses the "Markdown" linked data type whereas collapsed HTML uses the "Unformatted" type.
+
 ## Settings
 
 |Arg|Variable|Description|Notes|
@@ -197,4 +201,5 @@ Run #3:
 ||LIBMM_GUIDANCE_PATHS|":"-delimited list of paths for guidance documents||
 ||LIBMM_GUIDANCE_MAPPING|Path to mappings file||
 |--guidance-opnotebook|LIBMM_GUIDANCE_OPNOTEBOOK|Path to output Markdown file||
-|--guidance-scopes|LIBMM_GUIDANCE_SCOPES|Comma-separated list of scopes|Defaults to "default"|
+|--guidance-scopes|LIBMM_GUIDANCE_SCOPES|Comma-separated list of scopes|Defaults to "default"||
+|--guidance-displayformat|LIBMM_GUIDANCE_DISPLAYFORMAT|Either "markdown" or "chtml"|Defaults to "Markdown"||

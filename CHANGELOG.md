@@ -1,5 +1,11 @@
 ***
 
+# Version 1.13.0  - April 2026
+
+- Added a new option to Guidance extension to allow additional control of output format in the linked data table. This is primarily intended for use with Darkpool so that linked guidance is displayed as collapsed by default.
+
+***
+
 # Version 1.12.1 - October 2025
 
 - Add missing dependency for Arbitrageur script
