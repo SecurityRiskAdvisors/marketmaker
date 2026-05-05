@@ -24,8 +24,8 @@ PRE19_MIGRATION_MAP = {
 
 @lru_cache(maxsize=None)
 def get_v19_crosswalk():
-    with resource_path("libmm", "extensions", "attackmigrate") as p:
-        p = p / "v19-crosswalk.json"
+    with resource_path("libmm", "extensions") as p:
+        p = p / "attackmigrate" / "v19-crosswalk.json"
         crosswalk = load_json_from_file(p)
     return crosswalk
 

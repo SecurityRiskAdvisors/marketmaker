@@ -1,6 +1,12 @@
 ***
 
-# Version 1.14.0  - April 2026
+# Version 1.14.1  - May 2026
+
+- AttackMigrate extension bug fix
+
+***
+
+# Version 1.14.0  - May 2026
 
 - Update core and AttackMigrate extension to handle [ATT&CK v19](https://attack.mitre.org/resources/updates/updates-april-2026/). See environment variable [docs](docs/EnvVars.md) and extension [docs](docs/extensions/AttackMigrate.md) for details. 
 - Added removal of revoked Techniques from CTI functions
