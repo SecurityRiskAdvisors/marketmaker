@@ -14,3 +14,4 @@ The following environment variables can be used to control `libmm` settings:
 |LIBMM_DB_DELIMETER|String|Default delimiter to use for SerDe operations|\|\||When using the same database across runs, this value must not change|
 |LIBMM_DB_AUTODELETE|Boolean|If using an on-disk database, delete it before use|True||
 |LIBMM_EXPERIMENTAL_FEATURES|Boolean|Enable experimental features|False||
+|LIBMM_PRE_ATTACK19|Boolean|Enable ATT&CK pre-v19 mode to force Market Maker to use v18.1 of MITRE CTI data|False||

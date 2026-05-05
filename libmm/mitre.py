@@ -7,6 +7,7 @@ from copy import deepcopy
 
 from .type import Set, List, TypeVar, StrSetOrList
 from .utils import strip_strlist, COLORS, load_json_from_file, deep_get
+from .config import global_settings
 
 
 """
@@ -34,13 +35,18 @@ def get_cti_store() -> MemoryStore:
     # when calling methods that use this cti store
     src = MemoryStore()
     with resource_path("libmm", "data") as p:
-        p = p / "enterprise.json"
+        if global_settings.pre_attack_19:
+            cti_file = "enterprise-v181.json"
+        else:
+            cti_file = "enterprise.json"
+
+        p = p / cti_file
         src.load_from_file(p.resolve().as_posix())
     return src
 
 
 @lru_cache(maxsize=None)
-def get_mitre_tactic_id_map() -> dict:
+def get_mitre_tactic_id_map(use_shortnames: bool = False) -> dict:
     """return a mapping of tactic name -> tactic id"""
     results = get_cti_store().query(
         [Filter("type", "=", "x-mitre-tactic"), Filter("external_references.source_name", "=", "mitre-attack")]
@@ -50,7 +56,10 @@ def get_mitre_tactic_id_map() -> dict:
         tactic_id = list(filter(lambda x: x["source_name"] == "mitre-attack", result["external_references"]))[0][
             "external_id"
         ]
-        tactic_name = result["name"]
+        if use_shortnames:
+            tactic_name = result["x_mitre_shortname"]
+        else:
+            tactic_name = result["name"]
         mapping[tactic_name] = tactic_id
     return mapping
 
@@ -68,6 +77,9 @@ def get_valid_tactic_ids_for_tid(tid: str) -> List[str]:
             Filter("type", "=", "attack-pattern"),
             Filter("kill_chain_phases.kill_chain_name", "=", "mitre-attack"),
             Filter("external_references.external_id", "=", tid),
+            # per https://github.com/mitre-attack/attack-stix-data/blob/master/USAGE.md#working-with-deprecated-and-revoked-objects
+            Filter("revoked", "=", False),
+            Filter("x_mitre_deprecated", "=", False),
         ]
     )
     tactic_names = [reference.phase_name for results in results for reference in results.kill_chain_phases]
@@ -209,14 +221,15 @@ def merged_tids_to_layer_dicts(tids1: List[str], tids2: List[str]) -> List[dict]
 
 
 @dataclass
-class NavLayerV44(NavLayer):
-    # Navgiator layer version 4.4 per https://github.com/mitre-attack/attack-navigator/blob/master/layers/LAYERFORMATv4_4.md
+class NavLayerV45(NavLayer):
+    # Navgiator layer version 4.5 per https://github.com/mitre-attack/attack-navigator/blob/master/layers/spec/v4.5/layerformat.md
     # implements only the bare minimum fields required for use in the Navigator app
     techniques: List[dict] = field(default_factory=list)
     layout: dict = field(default_factory=lambda: {"layout": "flat"})
     domain: str = "enterprise-attack"
     selectTechniquesAcrossTactics: bool = False
     selectSubtechniquesWithParent: bool = False
+    versions: dict = field(default_factory=lambda: {"layer": "4.5"})
 
     def __post_init__(self):
         self._tids = []
@@ -225,7 +238,7 @@ class NavLayerV44(NavLayer):
     def tid_list(self) -> List[str]:
         return self._tids
 
-    def set_tids(self, tids: List[str]) -> "NavLayerV44":  # cascades
+    def set_tids(self, tids: List[str]) -> "NavLayerV45":  # cascades
         self._tids = tids
         self.techniques = tids_to_layer_dicts(tids=tids, child_opts={"color": LayerColors.SHARED})
         # sort by technique ID
@@ -236,22 +249,22 @@ class NavLayerV44(NavLayer):
         return asdict(self)
 
 
-def generate_navlayer_v44(name: str, description: str, tids: List[str]) -> NavLayerT:
+def generate_navlayer_v45(name: str, description: str, tids: List[str]) -> NavLayerT:
     """returns nav layer v4.4 for given TIDs"""
-    return NavLayerV44(name=name, description=description).set_tids(tids=tids)
+    return NavLayerV45(name=name, description=description).set_tids(tids=tids)
 
 
 def generate_latest_navlayer(*args, **kwargs) -> NavLayerT:
     """alias method for latest nav layer version implemented"""
-    return generate_navlayer_v44(*args, **kwargs)
+    return generate_navlayer_v45(*args, **kwargs)
 
 
-def generate_comparison_navlayer_v44(left_layer: NavLayerT, right_layer: NavLayerT):
+def generate_comparison_navlayer_v45(left_layer: NavLayerT, right_layer: NavLayerT):
     """Creates a merged layer from two layers that can be used for comparison purposes
     TIDs in only the left layer are colored blue. TIDs in only the right layer are colored red.
     TIDs in both layers are colored purple.
     """
-    merged_layer = NavLayerV44(
+    merged_layer = NavLayerV45(
         name="Comparison Layer", description=f"Comparison between {left_layer.name} and {right_layer.name}"
     )
     # generate an empty base layer
@@ -272,4 +285,4 @@ def generate_comparison_navlayer_v44(left_layer: NavLayerT, right_layer: NavLaye
 
 def generate_latest_comparison_layer(*args, **kwargs) -> dict:
     """alias method for latest merged layer version implemented"""
-    return generate_comparison_navlayer_v44(*args, **kwargs)
+    return generate_comparison_navlayer_v45(*args, **kwargs)

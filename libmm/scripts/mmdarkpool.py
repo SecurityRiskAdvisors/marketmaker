@@ -421,7 +421,6 @@ def html(techniques, blueprint_paths, latest_json, output_directory, nav_directo
         # set version to be latest (4.5) -> mm uses 4.4 but 4.5 is required
         #   to avoid getting prompted to migrate layer versions
         layer["hideDisabled"] = True
-        layer["versions"] = {"layer": "4.5"}
         layer_file = SitePaths.NavigatorLayer.format(blueprint_id=blueprint.id)
         dump_json_to_file(layer, output_directory.joinpath(layer_file))
 

@@ -1,5 +1,12 @@
 ***
 
+# Version 1.14.0  - April 2026
+
+- Update core and AttackMigrate extension to handle [ATT&CK v19](https://attack.mitre.org/resources/updates/updates-april-2026/). See environment variable [docs](docs/EnvVars.md) and extension [docs](docs/extensions/AttackMigrate.md) for details. 
+- Added removal of revoked Techniques from CTI functions
+
+***
+
 # Version 1.13.0  - April 2026
 
 - Added a new option to Guidance extension to allow additional control of output format in the linked data table. This is primarily intended for use with Darkpool so that linked guidance is displayed as collapsed by default.
