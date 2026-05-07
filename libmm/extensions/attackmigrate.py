@@ -128,7 +128,7 @@ class AttackMigrateHook(AbstractUserHook):
                             )
 
                         new_tactic_id = self._tactics.get(new_tactic)
-                        variant["metadata"]["tactic"] = new_technique_id
+                        variant["metadata"]["tactic"] = new_tactic_id
 
 
 hook = AttackMigrateHook()
