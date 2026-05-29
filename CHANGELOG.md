@@ -1,5 +1,12 @@
 ***
 
+# Version 1.14.3  - May 2026
+
+- Bug fix with Darkpool rendering HTML-like tags in linked Markdown data (and Guidance chtml)
+- Bug fix with Darkpool rendering lists from linked Markdown data (and Guidance chtml)
+
+***
+
 # Version 1.14.2  - May 2026
 
 - AttackMigrate extension bug fix

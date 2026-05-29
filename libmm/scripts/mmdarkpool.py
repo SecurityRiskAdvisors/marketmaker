@@ -136,7 +136,9 @@ def format_linked_data(linked_data: LinkedData):
     if linked_data.data_format == LinkedDataFormat.Plaintext:
         data = f"<pre>{data}</pre>"
     elif linked_data.data_format == LinkedDataFormat.Markdown:
-        data = f"<div id='markdown'>{data}</div>"
+        data = data.replace("<", "&lt;")
+        data = data.replace(">", "&gt;")
+        data = f"<div id='markdown' class='content'>{data}</div>"
     elif linked_data.data_format in [LinkedDataFormat.YAML, LinkedDataFormat.JSON]:
         data = f"<pre><code>{data}</code><pre>"
     elif linked_data.data_format == LinkedDataFormat.Unformatted:

@@ -277,7 +277,11 @@ class GuidanceMapping(SQLModel, table=True):
                         )
                     else:
                         title_and_description = f"""<h4 class="title is-6">{doc_title}</h4>"""
-                    content = f"""{title_and_description}<details><summary><u>Expand for guidance</u></summary><div id='markdown'>{doc.body}</div></details>"""
+
+                    doc_body = doc.body
+                    doc_body = doc_body.replace("<", "&lt;")
+                    doc_body = doc_body.replace(">", "&gt;")
+                    content = f"""{title_and_description}<details><summary><u>Expand for guidance</u></summary><div id='markdown' class='content'>{doc_body}</div></details>"""
                     ld_format = LinkedDataFormat.Unformatted
                 else:
                     content = doc.content
