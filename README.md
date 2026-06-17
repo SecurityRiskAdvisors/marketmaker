@@ -10,7 +10,7 @@ The [documentation directory](docs/) covers the core concepts and how to use the
 
 For an example of Market Maker generated content, see the SRA `indexes` repo: https://github.com/SecurityRiskAdvisors/indexes
 
-## Installtion
+## Installation
 
 ```
 pip install marketmaker
