@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "marketmaker"
-version = "1.14.3"
+version = "1.14.4"
 description = "Suite of tools for managing and creating attack plans"
 authors = ["2XXE <root@example.com>"]
 readme = "README.md"

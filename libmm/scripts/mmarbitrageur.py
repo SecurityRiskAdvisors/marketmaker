@@ -75,9 +75,9 @@ class AutomationConfiguration:
     @classmethod
     def from_yaml(cls, yaml: dict):
         # manually overriding these as them are commentedmaps from ruamel, not normal dicts
-        if "cli" in yaml:
+        if "cli" in yaml and not isinstance(yaml["cli"], AutomationConfigurationCli):
             yaml["cli"] = AutomationConfigurationCli(**yaml["cli"])
-        if "options" in yaml:
+        if "options" in yaml and not isinstance(yaml["options"], AutomationConfigurationOptions):
             yaml["options"] = AutomationConfigurationOptions(**yaml["options"])
         return cls(**yaml)
 

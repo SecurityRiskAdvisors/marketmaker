@@ -1,5 +1,11 @@
 ***
 
+# Version 1.14.4  - May 2026
+
+- Bug fix with Arbitrageur processing aliases entries
+
+***
+
 # Version 1.14.3  - May 2026
 
 - Bug fix with Darkpool rendering HTML-like tags in linked Markdown data (and Guidance chtml)
